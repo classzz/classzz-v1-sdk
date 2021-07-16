@@ -1,0 +1,16 @@
+{
+  "name": "classzz-v1-sdk",
+  "version": "0.0.2",
+  "description": "classzz swap sdk",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "classzz",
+    "swap",
+    "token"
+  ],
+  "author": "czz",
+  "license": "MIT"
+}
