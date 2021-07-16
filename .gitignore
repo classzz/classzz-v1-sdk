@@ -1,0 +1,11 @@
+node_modules
+.cache
+package-lock.json
+exampleDist
+yarn-error.log
+.vscode
+coverage
+.DS_store
+dist
+docs
+example
