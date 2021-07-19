@@ -6,7 +6,14 @@ import IUniswapV2Pair from '../abi/IUniswapV2Pair.json'
 import networks from '../utils/networks'
 import Web3 from "web3"
 
-
+/**
+ * @description: generate  pair address by tokenA and tokenB
+ * @param { Token } tokenA              
+ * @param { Token } tokenB
+ * @param { string } factoryAddreaa
+ * @param { string } initCodeHash
+ * @return { string }  
+ */
 export function getAddress(tokenA, tokenB, factoryAddreaa, initCodeHash) {
   let PAIR_ADDRESS_CACHE = {}
   const tokens = tokenA.sortsBefore(tokenB) ? [tokenA, tokenB] : [tokenB, tokenA] // does safety checks
@@ -26,6 +33,15 @@ export function getAddress(tokenA, tokenB, factoryAddreaa, initCodeHash) {
   return PAIR_ADDRESS_CACHE[tokens[0].address][tokens[1].address]
 }
 
+/**
+ * @description: generate token pair by tokenA and tokenB
+ * @param { Token } tokenA
+ * @param { Token } tokenB
+ * @param { string } factoryAddress
+ * @param { string } initCodeHash
+ * @param { Web3.providers.HttpProvider } provider
+ * @return { Pair }
+ */
 export const fetchPairData = async (tokenA, tokenB, factoryAddress, initCodeHash, provider) => {
   const address = getAddress(tokenA, tokenB, factoryAddress, initCodeHash)
   const infoContract = new Web3(provider)
@@ -43,6 +59,29 @@ export const fetchPairData = async (tokenA, tokenB, factoryAddress, initCodeHash
     console.log(error)
   }
 }
+
+/**
+ * @description: get swap price info
+ * @param { CurrencyProps } fromCurrency      : swap from token info 
+ * @param { CurrencyProps } toCurrency        : swap to token info 
+ * @param { string[] } bestFromArr            : swap from token address array
+ * @param { string[] } bestToArr              : swap to token address array
+ * @param { number } swapFee                  : swap fee
+ * @return {
+ *        loading : boolean, 
+ *        impactPrice : number ,  important swap price 
+ *        resultState : object   {
+                ethRes: number,
+                czzRes: number,
+                midPrice: number,
+                midProce2: number,
+                priceStatus: number,   3|2|1|0  
+                priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
+                price: string,
+                resStatus: string[]
+              }
+ * }
+ */
 export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
   const [loading, setLoading] = useState(false)
   const [impactPrice, setImpactPrice] = useState(0)
@@ -64,6 +103,12 @@ export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, sw
   const to = { ...toNetwork[0], currency: toCurrency, tokenValue: toCurrency.tokenValue, route: toCurrency.route }
 
 
+  /**
+   * @description: 
+   * @param { CurrencyProps } lp          : swap token info must be from or to token
+   * @param { string[] } routerList       : the best path token address array
+   * @return { number }                   : swap rate
+   */
   const fetchPair = async (lp, routerList) => {
     const { networkId, currency, czz, provider, networkName, weth } = lp
     const { factoryAddress, currentToken, initCodeHash } = lp.swap[lp.route]
@@ -103,6 +148,9 @@ export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, sw
     }
   }
 
+  /**
+   * @description: main method 
+   */
   const fetchPrice = useCallback(async () => {
     let resultStage = []
     resultStage = ['initial']
@@ -142,6 +190,14 @@ export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, sw
     }
   }, [to.tokenValue])
 
+  /**
+   * @description: change price status 
+   * @param { price : number } 
+   * @return {  
+   *       priceStatus: number,   3|2|1|0
+   *       priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
+   * }
+   */
   const changePriceStatus = val => {
     let price = Number(val)
     if (price > 15) {

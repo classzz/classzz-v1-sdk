@@ -11,7 +11,12 @@ import { ABI_SECURITY_POOL } from '../abi'
 import pools from '../utils/pools'
 import networks from '../utils/networks'
 
-// allowance authorization
+/**
+ * @description: allowance authorization
+ * @param { CurrencyProps } from : swap from token info
+ * @param { string } accounts : user account info
+ * @return { boolean }  
+ */
 export const allowanceAction = async (from, accounts) => {
   const { provider, currency, router: spender, tokenValue } = from
   const { tokenAddress } = currency
@@ -22,8 +27,18 @@ export const allowanceAction = async (from, accounts) => {
   return allonceNum.comparedTo(amountToken) > 0
 }
 
-// approve && authorization
-export const useApproveActions = async (currency = {}, accounts) => {
+/**
+ * @description: before swap must call this method , and  approve && authorization  true 
+ * @param { CurrencyProps } currency  swap from token info
+ * @param { string } accounts user account info
+ * @return { 
+ *        approveLoading:boolean, 
+ *        authorization:boolean, 
+ *        approveResult:object, 
+ *        pending:string[] 
+ * }
+ */
+export const useApproveActions = async (currency, accounts) => {
   const [approveLoading, setApproveLoading] = useState(false)
   const [authorization, setAuthorization] = useState(true)
   const [approveResult, setApproveResult] = useState()
@@ -59,7 +74,24 @@ export const useApproveActions = async (currency = {}, accounts) => {
   }
 }
 
+/**
+ * @description: 
+ * @param { CurrencyProps } fromCurrency  : swap from token info
+ * @param { CurrencyProps} toCurrency     : swap to token info
+ * @param { string } accounts             : swap user account info
+ * @param {boolean } isInsurance          : is use insurance
+ * @return { 
+ *        loading             :boolean, 
+ *        resultState         :object,  { priceStatus: 0, swapFee: 0, fromTokenValue: "", miniReceived: 0,  resStatus: []}
+ *        insuranceStatus     :boolean, 
+ *        isToCzz             :boolean, 
+ *        routerFrom          :string[], swap from token name array
+ *        routerTo            :string[], swap to token name array
+ *        bestFromArr         :string[], swap from token address array
+ *        bestToArr           :string[]  swap to token address array
+ * }
 
+ */
 export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
   const [loading, setLoading] = useState(false)
   const [isToCzz, setIsToCzz] = useState(false)
@@ -83,7 +115,12 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
   let newPools = [...pools, fromCurrency, toCurrency]
   let bestTokenArr
 
-  // insurance Status
+  /**
+   * @description: insurance Status
+   * @param { CurrencyProps } to   : swap to token info
+   * @param { number } amount      : amount
+   * @return { insuranceStatus: boolean }
+   */
   const changeInsuranceStatus = async (to, amount) => {
     if (to?.networkType && amount) {
       const decimals = 8
@@ -101,7 +138,13 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
     }
   }
 
-  // Get Burn amount Post
+  /**
+   * @description: Get Burn amount Post
+   * @param { CurrencyProps } pool         : swap token info must be from or to token
+   * @param { number } tokenValue          : swap token value 
+   * @param { boolean } isFrom             : only pool is from token then true , else  false
+   * @return {  maxResult: number }        : compute all possible swap path , get the maxResult  by interface getAmountsOut
+   */
   const swapBurnAmount = async (pool = {}, tokenValue, isFrom = false) => {
     try {
       const { czz, currency, provider, router, networkName, weth } = pool
@@ -165,7 +208,12 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
     }
   }
 
-
+  /**
+   * @description: compute swap casting amount
+   * @param { CurrencyProps } pool         : swap token info must be from or to token 
+   * @param { boolean } setRouter          : is set swap router
+   * @return { reust: number }             : swap casting amount
+   */
   const swapCastingAmount = async (pool = {}, setRouter = false) => {
     try {
       const { czz, provider, networkName, weth } = pool
@@ -210,6 +258,12 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
     }
   }
 
+  /**
+   * @description: main method : swap token value info
+   * @param { CurrencyProps } from          : swap from token info
+   * @param { CurrencyProps } to            : swap from token info
+   * @return { resultState : object}        : main method return all info
+   */
   const swapTokenValue = async (from, to) => {
     let resultStage = []
     resultStage = [...resultStage, 'initial']
@@ -292,7 +346,13 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
     }
   }
 
-  // swap router
+  /**
+   * @description: replace token name where is ''
+   * @param { CurrencyProps } pool         : swap token info must be from or to token
+   * @param { string[] } arr               : swap token name array
+   * @param { string : 'FROM'|'TO' } type  : swap token name type must be 'FROM' or 'TO'
+   * @return { string[] }                  : get new token name array 
+   */
   const getRouter = (pool = {}, arr, type = 'FROM') => {
     let newArr = [...arr]
     let systemType = pool?.currency?.systemType
