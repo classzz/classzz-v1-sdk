@@ -52,3 +52,14 @@ export declare function useMidPrice(fromCurrency: CurrencyProps, toCurrency: Cur
     impactPrice: number;
     resultState: ResultProps;
 };
+interface SwapSettingProps {
+    tolerance: number;
+    deadline: number;
+};
+export declare function useSwapAndBurn(): {
+    loading: boolean;
+    receipt: any;
+    hash: any;
+    fetchSwap: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, currentProvider: provider, accounts: string, swapSetting: SwapSettingProps, changeAmount: string, bestFromArr: string[], isInsurance: boolean) => void;
+    setHash: import("react").Dispatch<import("react").SetStateAction<any>>;
+};

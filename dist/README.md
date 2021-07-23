@@ -23,6 +23,10 @@ import { useGetTokenValue,useMidPrice } from 'classzz-v1-sdk'
 
     const { loading: midpriceStatus, impactPrice,resultState:midResult } = useMidPrice(from, to, bestFromArr, bestToArr, 118)
 
+    const { loading: swapling, receipt, hash, fetchSwap, setHash } = useSwapAndBurn()
+
+    fetchSwap(from, to, currentProvider, accounts, swapSetting, resultState.changeAmount, bestFromArr,false)
+
 ## dependencies
     "@ethersproject/address": "^5.4.0",
     "@ethersproject/contracts": "^5.4.0",

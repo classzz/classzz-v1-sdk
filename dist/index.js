@@ -6051,6 +6051,13 @@ var networks = [{
   image: 'https://cryptologos.cc/logos/binance-coin-bnb-logo.svg'
 }];
 
+/**
+ * @description: allowance authorization
+ * @param { CurrencyProps } from : swap from token info
+ * @param { string } accounts : user account info
+ * @return { boolean }  
+ */
+
 function _catch$1(body, recover) {
   try {
     var result = body();
@@ -6063,7 +6070,7 @@ function _catch$1(body, recover) {
   }
 
   return result;
-} // approve && authorization
+}
 
 function _settle(pact, state, value) {
   if (!pact.s) {
@@ -6253,6 +6260,25 @@ function _for(test, update, body) {
     }
   }
 }
+/**
+ * @description: 
+ * @param { CurrencyProps } fromCurrency  : swap from token info
+ * @param { CurrencyProps} toCurrency     : swap to token info
+ * @param { string } accounts             : swap user account info
+ * @param {boolean } isInsurance          : is use insurance
+ * @return { 
+ *        loading             :boolean, 
+ *        resultState         :object,  { priceStatus: 0, swapFee: 0, fromTokenValue: "", miniReceived: 0,  resStatus: []}
+ *        insuranceStatus     :boolean, 
+ *        isToCzz             :boolean, 
+ *        routerFrom          :string[], swap from token name array
+ *        routerTo            :string[], swap to token name array
+ *        bestFromArr         :string[], swap from token address array
+ *        bestToArr           :string[]  swap to token address array
+ * }
+
+ */
+
 function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
   var _to$currency3, _to$currency5, _from$currency;
 
@@ -6314,7 +6340,13 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
   });
 
   var newPools = [].concat(pools, [fromCurrency, toCurrency]);
-  var bestTokenArr; // insurance Status
+  var bestTokenArr;
+  /**
+   * @description: insurance Status
+   * @param { CurrencyProps } to   : swap to token info
+   * @param { number } amount      : amount
+   * @return { insuranceStatus: boolean }
+   */
 
   var changeInsuranceStatus = function changeInsuranceStatus(to, amount) {
     try {
@@ -6342,7 +6374,14 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
     } catch (e) {
       return Promise.reject(e);
     }
-  }; // Get Burn amount Post
+  };
+  /**
+   * @description: Get Burn amount Post
+   * @param { CurrencyProps } pool         : swap token info must be from or to token
+   * @param { number } tokenValue          : swap token value 
+   * @param { boolean } isFrom             : only pool is from token then true , else  false
+   * @return {  maxResult: number }        : compute all possible swap path , get the maxResult  by interface getAmountsOut
+   */
 
 
   var swapBurnAmount = function swapBurnAmount(pool, tokenValue, isFrom) {
@@ -6451,6 +6490,13 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
       return Promise.reject(e);
     }
   };
+  /**
+   * @description: compute swap casting amount
+   * @param { CurrencyProps } pool         : swap token info must be from or to token 
+   * @param { boolean } setRouter          : is set swap router
+   * @return { reust: number }             : swap casting amount
+   */
+
 
   var swapCastingAmount = function swapCastingAmount(pool, setRouter) {
     if (pool === void 0) {
@@ -6518,6 +6564,13 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
       return Promise.reject(e);
     }
   };
+  /**
+   * @description: main method : swap token value info
+   * @param { CurrencyProps } from          : swap from token info
+   * @param { CurrencyProps } to            : swap from token info
+   * @return { resultState : object}        : main method return all info
+   */
+
 
   var swapTokenValue = function swapTokenValue(from, to) {
     try {
@@ -6655,7 +6708,14 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
     } catch (e) {
       return Promise.reject(e);
     }
-  }; // swap router
+  };
+  /**
+   * @description: replace token name where is ''
+   * @param { CurrencyProps } pool         : swap token info must be from or to token
+   * @param { string[] } arr               : swap token name array
+   * @param { string : 'FROM'|'TO' } type  : swap token name type must be 'FROM' or 'TO'
+   * @return { string[] }                  : get new token name array 
+   */
 
 
   var getRouter = function getRouter(pool, arr, type) {
@@ -6723,6 +6783,15 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
   };
 }
 
+/**
+ * @description: generate  pair address by tokenA and tokenB
+ * @param { Token } tokenA              
+ * @param { Token } tokenB
+ * @param { string } factoryAddreaa
+ * @param { string } initCodeHash
+ * @return { string }  
+ */
+
 function _catch(body, recover) {
   try {
     var result = body();
@@ -6736,6 +6805,16 @@ function _catch(body, recover) {
 
   return result;
 }
+/**
+ * @description: generate token pair by tokenA and tokenB
+ * @param { Token } tokenA
+ * @param { Token } tokenB
+ * @param { string } factoryAddress
+ * @param { string } initCodeHash
+ * @param { Web3.providers.HttpProvider } provider
+ * @return { Pair }
+ */
+
 
 function _finallyRethrows(body, finalizer) {
   try {
@@ -6784,6 +6863,29 @@ var fetchPairData = function fetchPairData(tokenA, tokenB, factoryAddress, initC
     return Promise.reject(e);
   }
 };
+/**
+ * @description: get swap price info
+ * @param { CurrencyProps } fromCurrency      : swap from token info 
+ * @param { CurrencyProps } toCurrency        : swap to token info 
+ * @param { string[] } bestFromArr            : swap from token address array
+ * @param { string[] } bestToArr              : swap to token address array
+ * @param { number } swapFee                  : swap fee
+ * @return {
+ *        loading : boolean, 
+ *        impactPrice : number ,  important swap price 
+ *        resultState : object   {
+                ethRes: number,
+                czzRes: number,
+                midPrice: number,
+                midProce2: number,
+                priceStatus: number,   3|2|1|0  
+                priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
+                price: string,
+                resStatus: string[]
+              }
+ * }
+ */
+
 function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
   var _useState = react.useState(false),
       loading = _useState[0],
@@ -6824,6 +6926,13 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
     tokenValue: toCurrency.tokenValue,
     route: toCurrency.route
   });
+  /**
+   * @description: 
+   * @param { CurrencyProps } lp          : swap token info must be from or to token
+   * @param { string[] } routerList       : the best path token address array
+   * @return { number }                   : swap rate
+   */
+
 
   var fetchPair = function fetchPair(lp, routerList) {
     try {
@@ -6889,6 +6998,10 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
       return Promise.reject(e);
     }
   };
+  /**
+   * @description: main method 
+   */
+
 
   var fetchPrice = react.useCallback(function () {
     try {
@@ -6968,6 +7081,14 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
       return Promise.reject(e);
     }
   }, [to.tokenValue]);
+  /**
+   * @description: change price status 
+   * @param { price : number } 
+   * @return {  
+   *       priceStatus: number,   3|2|1|0
+   *       priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
+   * }
+   */
 
   var changePriceStatus = function changePriceStatus(val) {
     var price = Number(val);
@@ -7007,5 +7128,217 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
   };
 }
 
+var numberToHex = Web3__default['default'].utils.numberToHex;
+window.web3 = Web3__default['default'];
+window.BigNumber = BigNumber__default['default'];
+/**
+ * @description: swap from one token to another
+ */
+
+function useSwapAndBurn() {
+  var _useState = react.useState(null),
+      receipt = _useState[0],
+      setReceipt = _useState[1];
+
+  var _useState2 = react.useState(null),
+      hash = _useState2[0],
+      setHash = _useState2[1];
+
+  var _useState3 = react.useState(false),
+      loading = _useState3[0],
+      setLoading = _useState3[1];
+
+  var _useState4 = react.useState([]),
+      pending = _useState4[0],
+      setPending = _useState4[1];
+
+  var stopPending = function stopPending(id) {
+    setLoading(false);
+    setPending(pending.filter(function (i) {
+      return i.id !== id;
+    }));
+  }; // reset swap token loop
+
+
+  var swapSuccess = function swapSuccess(from, to, receipt) {
+    successMessage(from, to, receipt); // debugger
+    // resSwap()
+  };
+  /**
+   * @description: swap main
+   * @param { CurrencyProps } fromCurrency      : swap from token info
+   * @param { CurrencyProps } toCurrency        : swap to token info
+   * @param { Web3.providers.HttpProvider } provider  : Web3.providers.HttpProvider
+   * @param { string } accounts                 : user account info
+   * @param { SwapSettingProps } swapSetting    : swap setting
+   * @param { number } changeAmount             : swap changeAmount
+   * @param { string[] } bestFromArr            : swap from token address array
+   * @param {boolean } isInsurance          : is use insurance
+   * 
+   */
+
+
+  var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) {
+    var _from$currency, _from$currency2, _to$currency;
+
+    setLoading(true); // setButtonText('SWAP_ING')
+
+    var fromNetwork = networks.filter(function (i) {
+      return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+    });
+    var toNetwork = networks.filter(function (i) {
+      return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
+    });
+
+    var from = _extends({}, fromNetwork[0], {
+      currency: fromCurrency,
+      tokenValue: fromCurrency.tokenValue,
+      route: fromCurrency.route
+    });
+
+    var to = _extends({}, toNetwork[0], {
+      currency: toCurrency,
+      tokenValue: toCurrency.tokenValue,
+      route: toCurrency.route
+    });
+
+    var tolerance = swapSetting.tolerance,
+        deadline = swapSetting.deadline;
+    var infoContract = new Web3__default['default'](currentProvider);
+    var lpContract = new infoContract.eth.Contract(from.abi, from.router);
+    var amountIn = decToBn(Number(from == null ? void 0 : from.tokenValue), (_from$currency = from.currency) == null ? void 0 : _from$currency.decimals); // debugger
+
+    var tolerancAmount = changeAmount ? Web3__default['default'].utils.numberToHex(changeAmount.multipliedBy(100 - 3).dividedBy(100).integerValue(BigNumber__default['default'].ROUND_DOWN)) : 0; // history params
+
+    console.log("swapSetting  ->  tolerance : " + tolerance + " , deadline : " + deadline);
+    var swapTime = new Date().getTime();
+    var deadlineVal = deadline ? swapTime + deadline : 100000000000000;
+    var recentItem = {
+      types: 'Swap',
+      accounts: accounts,
+      content: "Swap " + (from == null ? void 0 : from.tokenValue) + " " + ((_from$currency2 = from.currency) == null ? void 0 : _from$currency2.symbol) + " to " + (to == null ? void 0 : to.miniReceived) + " " + ((_to$currency = to.currency) == null ? void 0 : _to$currency.symbol)
+    };
+
+    var getHashUrl = function getHashUrl(address) {
+      var _from$currency3, _to$currency2;
+
+      return {
+        explorerUrl: from.explorerUrl + "tx/" + address,
+        fromUrl: from.explorerUrl,
+        fromType: from.networkType,
+        fromSymbol: (_from$currency3 = from.currency) == null ? void 0 : _from$currency3.symbol,
+        toSymbol: (_to$currency2 = to.currency) == null ? void 0 : _to$currency2.symbol,
+        toType: to.networkType,
+        toUrl: to.explorerUrl,
+        fromImage: from.currency.image,
+        toImage: to.currency.image,
+        fromRoute: from.swap[from.route],
+        toRoute: to.swap[to.route]
+      };
+    };
+
+    var swapTranscationHash = function swapTranscationHash(hashRes) {
+      console.log('Swap Hash Result ===', hashRes);
+
+      var swapResresult = _extends({}, recentItem, {
+        status: 0,
+        hash: hashRes
+      }, getHashUrl(from), {
+        id: swapTime
+      }); // setRecent([swapResresult, ...recent])
+
+
+      setHash(swapResresult);
+      setPending([].concat(pending, [swapResresult]));
+    };
+
+    var swapReceipt = function swapReceipt(receipt, id) {
+      console.log('Swap receipt Result ===> ', receipt);
+      setReceipt(receipt);
+      swapSuccess(from, to, receipt);
+      stopPending(swapTime);
+    };
+
+    var swapError = function swapError(error) {
+      setLoading(false);
+      stopPending(swapTime); // setButtonText('SWAP')
+
+      console.log('Swap Error ===>', error);
+    };
+
+    var lpSwap = function lpSwap(swaprouter, toaddress) {
+      var path = [];
+
+      if ((bestFromArr == null ? void 0 : bestFromArr.length) > 0) {
+        path = [].concat(bestFromArr);
+      }
+
+      lpContract.methods.swapAndBurnWithPath(numberToHex(new BigNumber__default['default'](amountIn)), tolerancAmount, // tolerancAmount, // 0
+      to.ntype, toaddress, swaprouter, // change router setting
+      path, // change weth setting
+      deadlineVal).send({
+        from: accounts
+      }).on("transactionHash", swapTranscationHash).on("receipt", swapReceipt).on("error", swapError);
+    };
+
+    var czzSwap = function czzSwap(toaddress) {
+      lpContract.methods.burn(numberToHex(new BigNumber__default['default'](amountIn)), to.ntype, toaddress).send({
+        from: accounts
+      }).on("transactionHash", swapTranscationHash).on("receipt", swapReceipt).on("error", swapError);
+    };
+
+    var ethSwap = function ethSwap(swaprouter, toaddress) {
+      var path = [];
+
+      if ((bestFromArr == null ? void 0 : bestFromArr.length) > 0) {
+        path = [].concat(bestFromArr);
+      }
+
+      lpContract.methods.swapAndBurnEthWithPath(tolerancAmount, // tolerancAmount, // 0
+      to.ntype, toaddress, swaprouter, // change router setting
+      path, // change weth setting
+      deadlineVal).send({
+        from: accounts,
+        value: new BigNumber__default['default'](amountIn)
+      }).on("transactionHash", swapTranscationHash).on("receipt", swapReceipt).on("error", swapError);
+    }; // debugger
+
+
+    var toaddress = to.currency.tokenAddress ? to.currency.tokenAddress : "0x0000000000000000000000000000000000000000";
+
+    if (to.currency.tokenAddress === to.czz) {
+      toaddress = to.czz;
+    }
+
+    var swaprouter = from.swap[from.route].swaprouter;
+    var swaprouter2 = to.swap[to.route].swaprouter;
+    toaddress = toaddress + '#' + swaprouter2;
+
+    if (to.currency.tokenAddress !== to.czz && isInsurance) {
+      toaddress = toaddress + '#true';
+    }
+
+    if (from.currency.tokenAddress !== from.czz) {
+      from.currency.tokenAddress ? lpSwap(swaprouter, toaddress) : ethSwap(swaprouter, toaddress);
+    } else {
+      czzSwap(toaddress);
+    }
+  };
+
+  var successMessage = function successMessage(from, to, res) {
+    //todo callback function
+    console.log("successMessage : Swap " + (from == null ? void 0 : from.currency.symbol) + " to " + (to == null ? void 0 : to.currency.symbol) + "  process url  " + (from == null ? void 0 : from.explorerUrl) + "tx/" + res.transactionHash);
+  };
+
+  return {
+    loading: loading,
+    receipt: receipt,
+    hash: hash,
+    fetchSwap: fetchSwap,
+    setHash: setHash
+  };
+}
+
 exports.useGetTokenValue = useGetTokenValue;
 exports.useMidPrice = useMidPrice;
+exports.useSwapAndBurn = useSwapAndBurn;
