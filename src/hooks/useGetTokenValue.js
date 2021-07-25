@@ -12,15 +12,18 @@ import pools from '../utils/pools'
 import networks from '../utils/networks'
 
 /**
- * @description: allowance authorization
- * @param { CurrencyProps } from : swap from token info
- * @param { string } accounts : user account info
+ * @description: if  allowance  is true  can swap , else must call useApproveActions first
+ * @param { CurrencyProps } fromCurrency      : swap from token info
+ * @param { currentProvider } currentProvider : current wallet provider 
+ * @param { string } accounts                 : user account info
  * @return { boolean }  
  */
-export const allowanceAction = async (from, accounts) => {
-  const { provider, currency, router: spender, tokenValue } = from
+export const allowanceAction = async (fromCurrency, currentProvider, accounts) => {
+  const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
+  const from = { ...fromNetwork[0], tokenValue: fromCurrency.tokenValue, currency: fromCurrency }
+  const { currency, router: spender, tokenValue } = from
   const { tokenAddress } = currency
-  const allowanceTotal = await allowance({ provider, tokenAddress, spender, accounts })
+  const allowanceTotal = await allowance({ provider: currentProvider, tokenAddress, spender, accounts })
   const amountToken = new BigNumber(decToBn(tokenValue))
   const allonceNum = new BigNumber(decToBn(allowanceTotal))
   console.log('Allowance result==', allonceNum)
@@ -28,8 +31,9 @@ export const allowanceAction = async (from, accounts) => {
 }
 
 /**
- * @description: before swap must call this method , and  approve && authorization  true 
- * @param { CurrencyProps } currency  swap from token info
+ * @description: before swap must call this method , and  authorization must true 
+ * @param { CurrencyProps } fromCurrency  swap from token info
+ * @param { currentProvider } currentProvider : current wallet provider
  * @param { string } accounts user account info
  * @return { 
  *        approveLoading:boolean, 
@@ -38,39 +42,36 @@ export const allowanceAction = async (from, accounts) => {
  *        pending:string[] 
  * }
  */
-export const useApproveActions = async (currency, accounts) => {
+export const useApproveActions = () => {
   const [approveLoading, setApproveLoading] = useState(false)
   const [authorization, setAuthorization] = useState(true)
   const [approveResult, setApproveResult] = useState()
   const [pending, setPending] = useState([])
 
-  const fromNetwork = networks.filter(i => i.networkType === currency?.systemType)
-  const [from, setFrom] = useState({ ...fromNetwork[0], currency })
-  const { router: spender, explorerUrl, provider } = from
-
-  try {
-    setApproveLoading(true)
-    setPending([...pending, 'approve'])
-    const res = await approve({ provider: provider, tokenAddress: currency?.tokenAddress, spender, accounts })
-    console.log('Approve result ======', res)
-    setAuthorization(true)
-    setApproveLoading(false)
-    setPending(pending.filter(i => i !== 'approve'))
-    setApproveResult(res)
-    // if from is network approve setting true
-    const allowanceResult = from.currency.tokenAddress ? await allowanceAction(from, accounts) : true
-    setAuthorization(allowanceResult)
-    // })
-  } catch (error) {
-    setAuthorization(false)
-    throw error
-  } finally {
-    setApproveLoading(false)
-    setPending(pending.filter(i => i !== 'approve'))
+  const approveAction = async (fromCurrency, currentProvider, accounts) => {
+    try {
+      const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
+      const from = { ...fromNetwork[0], tokenValue: fromCurrency.tokenValue, currency: fromCurrency }
+      const { router: spender } = from
+      setApproveLoading(true)
+      setPending([...pending, 'approve'])
+      const res = await approve({ provider: currentProvider, tokenAddress: fromCurrency?.tokenAddress, spender, accounts })
+      console.log('Approve result ======', res)
+      setAuthorization(true)
+      setApproveLoading(false)
+      setPending(pending.filter(i => i !== 'approve'))
+      setApproveResult(res)
+      // })
+    } catch (error) {
+      setAuthorization(false)
+      throw error
+    } finally {
+      setApproveLoading(false)
+      setPending(pending.filter(i => i !== 'approve'))
+    }
   }
-
   return {
-    approveLoading, authorization, approveResult, pending
+    approveLoading, authorization, approveResult, pending, approveAction
   }
 }
 
@@ -92,7 +93,7 @@ export const useApproveActions = async (currency, accounts) => {
  * }
 
  */
-export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
+export function useGetTokenValue() {
   const [loading, setLoading] = useState(false)
   const [isToCzz, setIsToCzz] = useState(false)
   const [routerFrom, setRouterFrom] = useState([])
@@ -104,15 +105,12 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
     priceStatus: 0,
     swapFee: 0,
     fromTokenValue: "",
+    changeAmount: 0,
     miniReceived: 0,
     resStatus: []
   })
-  const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
-  const toNetwork = networks.filter(i => i.networkType === toCurrency?.systemType)
-  const from = { ...fromNetwork[0], currency: fromCurrency, tokenValue: fromCurrency.tokenValue, route: fromCurrency.route }
-  const to = { ...toNetwork[0], currency: toCurrency, tokenValue: toCurrency.tokenValue, route: toCurrency.route }
 
-  let newPools = [...pools, fromCurrency, toCurrency]
+  let newPools
   let bestTokenArr
 
   /**
@@ -201,7 +199,6 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
       let nameArray = tokenArray[maxResetInd].map(item => newPools.find(poolsItem => poolsItem.tokenAddress === item)?.symbol ?? '')
       isFrom ? setRouterFrom(getRouter(pool, nameArray, 'FROM')) : setRouterTo(getRouter(pool, nameArray, 'TO'))
       console.log("SwapBurnGetAmount final result =", result)
-
       return maxResult
     } catch (error) {
       throw error
@@ -214,7 +211,7 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
    * @param { boolean } setRouter          : is set swap router
    * @return { reust: number }             : swap casting amount
    */
-  const swapCastingAmount = async (pool = {}, setRouter = false) => {
+  const swapCastingAmount = async (pool = {}, isInsurance, setRouter = false) => {
     try {
       const { czz, provider, networkName, weth } = pool
       const { swaprouter, currentToken } = pool.swap[pool.route]
@@ -264,7 +261,13 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
    * @param { CurrencyProps } to            : swap from token info
    * @return { resultState : object}        : main method return all info
    */
-  const swapTokenValue = async (from, to) => {
+  const swapTokenValue = async (fromCurrency, toCurrency, isInsurance) => {
+    const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
+    const toNetwork = networks.filter(i => i.networkType === toCurrency?.systemType)
+    const from = { ...fromNetwork[0], currency: fromCurrency, tokenValue: fromCurrency.tokenValue, route: fromCurrency.route }
+    const to = { ...toNetwork[0], currency: toCurrency, tokenValue: toCurrency.tokenValue, route: toCurrency.route }
+
+    newPools = [...pools, fromCurrency, toCurrency]
     let resultStage = []
     resultStage = [...resultStage, 'initial']
     if (from && from?.currency && to?.currency && from?.tokenValue && Number(from?.tokenValue) > 0) {
@@ -304,7 +307,7 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
         console.log(to.currency.tokenAddress, to.czz);
         if (to.currency.tokenAddress !== to.czz) {
           const result = await swapBurnAmount(to, changeAmount, false)
-          const czzfee = await swapCastingAmount(to)
+          const czzfee = await swapCastingAmount(to, isInsurance, false)
           const changeAmount2 = changeAmount - czzfee
           resultStage = [...resultStage, 'to1']
           setResultState({ ...resultState, resStatus: [...resultStage] })
@@ -319,7 +322,7 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
         } else {
           resultStage = [...resultStage, 'to3']
           setResultState({ ...resultState, resStatus: [...resultStage] })
-          const czzfee = await swapCastingAmount(to, true)
+          const czzfee = await swapCastingAmount(to, isInsurance, true)
           if (changeAmount - czzfee < 0) {
             miniReceived = 0
           } else {
@@ -333,14 +336,16 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
         console.log("SWAP AMOUNT ==", from.tokenValue, "miniReceived", miniReceived)
         resultStage = [...resultStage, 'end']
         setResultState({
-          ...resultState, fromTokenValue: from.tokenValue, miniReceived, swapFee,
+          ...resultState, fromTokenValue: from.tokenValue, miniReceived, swapFee, changeAmount,
           resStatus: [...resultStage]
         })
         setLoading(false)
+        setIsToCzz(to?.currency?.symbol ? to?.currency?.symbol.indexOf('CZZ') !== -1 : false)
       } catch (error) {
         resultStage = [...resultStage, 'NONE_TRADE']
         setResultState({ ...resultState, resStatus: [...resultStage] })
         setLoading(false)
+        setIsToCzz(to?.currency?.symbol ? to?.currency?.symbol.indexOf('CZZ') !== -1 : false)
         throw error
       }
     }
@@ -368,24 +373,17 @@ export function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance
   }
 
 
-  useEffect(() => {
-    setIsToCzz(to?.currency?.symbol ? to?.currency?.symbol.indexOf('CZZ') !== -1 : false)
-  }, [to?.currency?.symbol])
+  // useEffect(() => {
+  //   setIsToCzz(to?.currency?.symbol ? to?.currency?.symbol.indexOf('CZZ') !== -1 : false)
+  // }, [to?.currency?.symbol])
 
   // Get token Value Effect
-  useEffect(() => {
-    if (from.currency && from?.tokenValue && to.currency?.symbol) {
-      swapTokenValue(from, to)
-    }
-  }, [from?.tokenValue, to.currency?.symbol, from.currency?.symbol, accounts, from.route, to.route])
+  // useEffect(() => {
+  //   if (from.currency && from?.tokenValue && to.currency?.symbol) {
+  //     swapTokenValue(from, to)
+  //   }
+  // }, [from.tokenValue])
 
-
-  useEffect(() => {
-    if (from.currency && from?.tokenValue && to.currency?.symbol) {
-      swapTokenValue(from, to)
-    }
-  }, [isInsurance])
-
-  return { loading, resultState, insuranceStatus, isToCzz, routerFrom, routerTo, bestFromArr, bestToArr }
+  return { loading, resultState, insuranceStatus, isToCzz, routerFrom, routerTo, bestFromArr, bestToArr, swapTokenValue }
 
 }

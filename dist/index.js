@@ -6052,9 +6052,10 @@ var networks = [{
 }];
 
 /**
- * @description: allowance authorization
- * @param { CurrencyProps } from : swap from token info
- * @param { string } accounts : user account info
+ * @description: if  allowance  is true  can swap , else must call useApproveActions first
+ * @param { CurrencyProps } fromCurrency      : swap from token info
+ * @param { currentProvider } currentProvider : current wallet provider 
+ * @param { string } accounts                 : user account info
  * @return { boolean }  
  */
 
@@ -6279,67 +6280,47 @@ function _for(test, update, body) {
 
  */
 
-function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
-  var _to$currency3, _to$currency5, _from$currency;
+function useGetTokenValue() {
+  var _useState5 = react.useState(false),
+      loading = _useState5[0],
+      setLoading = _useState5[1];
 
   var _useState6 = react.useState(false),
-      loading = _useState6[0],
-      setLoading = _useState6[1];
+      isToCzz = _useState6[0],
+      setIsToCzz = _useState6[1];
 
-  var _useState7 = react.useState(false),
-      isToCzz = _useState7[0],
-      setIsToCzz = _useState7[1];
+  var _useState7 = react.useState([]),
+      routerFrom = _useState7[0],
+      setRouterFrom = _useState7[1];
 
   var _useState8 = react.useState([]),
-      routerFrom = _useState8[0],
-      setRouterFrom = _useState8[1];
+      routerTo = _useState8[0],
+      setRouterTo = _useState8[1];
 
-  var _useState9 = react.useState([]),
-      routerTo = _useState9[0],
-      setRouterTo = _useState9[1];
+  var _useState9 = react.useState(false),
+      insuranceStatus = _useState9[0],
+      setInsuranceStatus = _useState9[1];
 
-  var _useState10 = react.useState(false),
-      insuranceStatus = _useState10[0],
-      setInsuranceStatus = _useState10[1];
+  var _useState10 = react.useState([]),
+      bestFromArr = _useState10[0],
+      setBestFromArr = _useState10[1];
 
   var _useState11 = react.useState([]),
-      bestFromArr = _useState11[0],
-      setBestFromArr = _useState11[1];
+      bestToArr = _useState11[0],
+      setBestToArr = _useState11[1];
 
-  var _useState12 = react.useState([]),
-      bestToArr = _useState12[0],
-      setBestToArr = _useState12[1];
-
-  var _useState13 = react.useState({
+  var _useState12 = react.useState({
     priceStatus: 0,
     swapFee: 0,
     fromTokenValue: "",
+    changeAmount: 0,
     miniReceived: 0,
     resStatus: []
   }),
-      resultState = _useState13[0],
-      setResultState = _useState13[1];
+      resultState = _useState12[0],
+      setResultState = _useState12[1];
 
-  var fromNetwork = networks.filter(function (i) {
-    return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
-  });
-  var toNetwork = networks.filter(function (i) {
-    return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
-  });
-
-  var from = _extends({}, fromNetwork[0], {
-    currency: fromCurrency,
-    tokenValue: fromCurrency.tokenValue,
-    route: fromCurrency.route
-  });
-
-  var to = _extends({}, toNetwork[0], {
-    currency: toCurrency,
-    tokenValue: toCurrency.tokenValue,
-    route: toCurrency.route
-  });
-
-  var newPools = [].concat(pools, [fromCurrency, toCurrency]);
+  var newPools;
   var bestTokenArr;
   /**
    * @description: insurance Status
@@ -6350,7 +6331,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
 
   var changeInsuranceStatus = function changeInsuranceStatus(to, amount) {
     try {
-      var _temp7 = function () {
+      var _temp2 = function () {
         if (to != null && to.networkType && amount) {
           var decimals = 8;
           var _insuranceNetwork$to$ = insuranceNetwork[to == null ? void 0 : to.networkType],
@@ -6370,7 +6351,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
         }
       }();
 
-      return Promise.resolve(_temp7 && _temp7.then ? _temp7.then(function () {}) : void 0);
+      return Promise.resolve(_temp2 && _temp2.then ? _temp2.then(function () {}) : void 0);
     } catch (e) {
       return Promise.reject(e);
     }
@@ -6407,7 +6388,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
             currentToken = _pool$swap$pool$route.currentToken;
         return Promise.resolve(new Web3__default['default'](provider)).then(function (contract) {
           return Promise.resolve(new contract.eth.Contract(IUniswapV2Router02, swaprouter)).then(function (lpContract) {
-            function _temp10() {
+            function _temp5() {
               maxResult = Math.max.apply(Math, resultEnd);
               maxResetInd = resultEnd.findIndex(function (item) {
                 return item === maxResult;
@@ -6462,12 +6443,12 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
             var i = 0,
                 len = tokenArray.length;
 
-            var _temp9 = _for(function () {
+            var _temp4 = _for(function () {
               return i < len;
             }, function () {
               return i++;
             }, function () {
-              var _temp8 = _catch$1(function () {
+              var _temp3 = _catch$1(function () {
                 return Promise.resolve(lpContract.methods.getAmountsOut(tokenamount, tokenArray[i]).call(null)).then(function (_lpContract$methods$g) {
                   result[i] = _lpContract$methods$g;
                   resultEnd[i] = Number(result[i][result[i].length - 1]);
@@ -6477,10 +6458,10 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
                 resultEnd[i] = 0;
               });
 
-              if (_temp8 && _temp8.then) return _temp8.then(function () {});
+              if (_temp3 && _temp3.then) return _temp3.then(function () {});
             });
 
-            return _temp9 && _temp9.then ? _temp9.then(_temp10) : _temp10(_temp9);
+            return _temp4 && _temp4.then ? _temp4.then(_temp5) : _temp5(_temp4);
           });
         });
       }, function (error) {
@@ -6498,7 +6479,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
    */
 
 
-  var swapCastingAmount = function swapCastingAmount(pool, setRouter) {
+  var swapCastingAmount = function swapCastingAmount(pool, isInsurance, setRouter) {
     if (pool === void 0) {
       pool = {};
     }
@@ -6572,28 +6553,52 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
    */
 
 
-  var swapTokenValue = function swapTokenValue(from, to) {
+  var swapTokenValue = function swapTokenValue(fromCurrency, toCurrency, isInsurance) {
     try {
-      var _exit4;
+      var _exit2;
 
+      var fromNetwork = networks.filter(function (i) {
+        return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+      });
+      var toNetwork = networks.filter(function (i) {
+        return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
+      });
+
+      var from = _extends({}, fromNetwork[0], {
+        currency: fromCurrency,
+        tokenValue: fromCurrency.tokenValue,
+        route: fromCurrency.route
+      });
+
+      var to = _extends({}, toNetwork[0], {
+        currency: toCurrency,
+        tokenValue: toCurrency.tokenValue,
+        route: toCurrency.route
+      });
+
+      newPools = [].concat(pools, [fromCurrency, toCurrency]);
       var resultStage = [];
       resultStage = [].concat(resultStage, ['initial']);
       return Promise.resolve(function () {
         if (from && from != null && from.currency && to != null && to.currency && from != null && from.tokenValue && Number(from == null ? void 0 : from.tokenValue) > 0) {
           return _catch$1(function () {
-            function _temp15(_result2) {
-              if (_exit4) return _result2;
+            function _temp10(_result2) {
+              if (_exit2) return _result2;
 
-              function _temp13() {
+              function _temp8() {
+                var _to$currency, _to$currency2;
+
                 console.log("SWAP AMOUNT ==", from.tokenValue, "miniReceived", miniReceived);
                 resultStage = [].concat(resultStage, ['end']);
                 setResultState(_extends({}, resultState, {
                   fromTokenValue: from.tokenValue,
                   miniReceived: miniReceived,
                   swapFee: swapFee,
+                  changeAmount: changeAmount,
                   resStatus: [].concat(resultStage)
                 }));
                 setLoading(false);
+                setIsToCzz(to != null && (_to$currency = to.currency) != null && _to$currency.symbol ? (to == null ? void 0 : (_to$currency2 = to.currency) == null ? void 0 : _to$currency2.symbol.indexOf('CZZ')) !== -1 : false);
               }
 
               var swapFee = 0;
@@ -6602,17 +6607,17 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
               var totoken = new sdk.Token(to.networkId, tokenAddress, to.currency.decimals);
               console.log(to.currency.tokenAddress, to.czz);
 
-              var _temp12 = function () {
+              var _temp7 = function () {
                 if (to.currency.tokenAddress !== to.czz) {
                   return Promise.resolve(swapBurnAmount(to, changeAmount, false)).then(function (result) {
-                    return Promise.resolve(swapCastingAmount(to)).then(function (czzfee) {
+                    return Promise.resolve(swapCastingAmount(to, isInsurance, false)).then(function (czzfee) {
                       var changeAmount2 = changeAmount - czzfee;
                       resultStage = [].concat(resultStage, ['to1']);
                       setResultState(_extends({}, resultState, {
                         resStatus: [].concat(resultStage)
                       }));
 
-                      var _temp11 = function () {
+                      var _temp6 = function () {
                         if (changeAmount2 > 0) {
                           return Promise.resolve(swapBurnAmount(to, changeAmount2, false)).then(function (result1) {
                             var amounts1 = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(result1));
@@ -6626,7 +6631,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
                         }
                       }();
 
-                      if (_temp11 && _temp11.then) return _temp11.then(function () {});
+                      if (_temp6 && _temp6.then) return _temp6.then(function () {});
                     });
                   });
                 } else {
@@ -6634,7 +6639,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
                   setResultState(_extends({}, resultState, {
                     resStatus: [].concat(resultStage)
                   }));
-                  return Promise.resolve(swapCastingAmount(to, true)).then(function (czzfee) {
+                  return Promise.resolve(swapCastingAmount(to, isInsurance, true)).then(function (czzfee) {
                     if (changeAmount - czzfee < 0) {
                       miniReceived = 0;
                     } else {
@@ -6648,7 +6653,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
                 }
               }();
 
-              return _temp12 && _temp12.then ? _temp12.then(_temp13) : _temp13(_temp12);
+              return _temp7 && _temp7.then ? _temp7.then(_temp8) : _temp8(_temp7);
             }
 
             setLoading(true);
@@ -6661,7 +6666,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
             var inAmount = decToBn(from.tokenValue, from.currency.decimals).toString();
             changeInsuranceStatus(to);
 
-            var _temp14 = function () {
+            var _temp9 = function () {
               if (from.currency.tokenAddress !== from.czz) {
                 console.log('inAmount == ', inAmount);
                 return Promise.resolve(swapBurnAmount(from, inAmount, true)).then(function (inAmountRes) {
@@ -6678,7 +6683,7 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
                       resStatus: [].concat(resultStage)
                     }));
                     setLoading(false);
-                    _exit4 = 1;
+                    _exit2 = 1;
                     return false;
                   }
                 });
@@ -6694,13 +6699,16 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
               }
             }();
 
-            return _temp14 && _temp14.then ? _temp14.then(_temp15) : _temp15(_temp14);
+            return _temp9 && _temp9.then ? _temp9.then(_temp10) : _temp10(_temp9);
           }, function (error) {
+            var _to$currency3, _to$currency4;
+
             resultStage = [].concat(resultStage, ['NONE_TRADE']);
             setResultState(_extends({}, resultState, {
               resStatus: [].concat(resultStage)
             }));
             setLoading(false);
+            setIsToCzz(to != null && (_to$currency3 = to.currency) != null && _to$currency3.symbol ? (to == null ? void 0 : (_to$currency4 = to.currency) == null ? void 0 : _to$currency4.symbol.indexOf('CZZ')) !== -1 : false);
             throw error;
           });
         }
@@ -6749,28 +6757,17 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
     }
 
     return newArr;
-  };
+  }; // useEffect(() => {
+  //   setIsToCzz(to?.currency?.symbol ? to?.currency?.symbol.indexOf('CZZ') !== -1 : false)
+  // }, [to?.currency?.symbol])
+  // Get token Value Effect
+  // useEffect(() => {
+  //   if (from.currency && from?.tokenValue && to.currency?.symbol) {
+  //     swapTokenValue(from, to)
+  //   }
+  // }, [from.tokenValue])
 
-  react.useEffect(function () {
-    var _to$currency, _to$currency2;
 
-    setIsToCzz(to != null && (_to$currency = to.currency) != null && _to$currency.symbol ? (to == null ? void 0 : (_to$currency2 = to.currency) == null ? void 0 : _to$currency2.symbol.indexOf('CZZ')) !== -1 : false);
-  }, [to == null ? void 0 : (_to$currency3 = to.currency) == null ? void 0 : _to$currency3.symbol]); // Get token Value Effect
-
-  react.useEffect(function () {
-    var _to$currency4;
-
-    if (from.currency && from != null && from.tokenValue && (_to$currency4 = to.currency) != null && _to$currency4.symbol) {
-      swapTokenValue(from, to);
-    }
-  }, [from == null ? void 0 : from.tokenValue, (_to$currency5 = to.currency) == null ? void 0 : _to$currency5.symbol, (_from$currency = from.currency) == null ? void 0 : _from$currency.symbol, accounts, from.route, to.route]);
-  react.useEffect(function () {
-    var _to$currency6;
-
-    if (from.currency && from != null && from.tokenValue && (_to$currency6 = to.currency) != null && _to$currency6.symbol) {
-      swapTokenValue(from, to);
-    }
-  }, [isInsurance]);
   return {
     loading: loading,
     resultState: resultState,
@@ -6779,7 +6776,8 @@ function useGetTokenValue(fromCurrency, toCurrency, accounts, isInsurance) {
     routerFrom: routerFrom,
     routerTo: routerTo,
     bestFromArr: bestFromArr,
-    bestToArr: bestToArr
+    bestToArr: bestToArr,
+    swapTokenValue: swapTokenValue
   };
 }
 
@@ -6886,7 +6884,7 @@ var fetchPairData = function fetchPairData(tokenA, tokenB, factoryAddress, initC
  * }
  */
 
-function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
+function useMidPrice() {
   var _useState = react.useState(false),
       loading = _useState[0],
       setLoading = _useState[1];
@@ -6907,25 +6905,6 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
   }),
       resultState = _useState3[0],
       setResultState = _useState3[1];
-
-  var fromNetwork = networks.filter(function (i) {
-    return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
-  });
-  var toNetwork = networks.filter(function (i) {
-    return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
-  });
-
-  var from = _extends({}, fromNetwork[0], {
-    currency: fromCurrency,
-    tokenValue: fromCurrency.tokenValue,
-    route: fromCurrency.route
-  });
-
-  var to = _extends({}, toNetwork[0], {
-    currency: toCurrency,
-    tokenValue: toCurrency.tokenValue,
-    route: toCurrency.route
-  });
   /**
    * @description: 
    * @param { CurrencyProps } lp          : swap token info must be from or to token
@@ -7003,12 +6982,31 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
    */
 
 
-  var fetchPrice = react.useCallback(function () {
+  var fetchPrice = react.useCallback(function (fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
     try {
+      var fromNetwork = networks.filter(function (i) {
+        return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+      });
+      var toNetwork = networks.filter(function (i) {
+        return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
+      });
+
+      var from = _extends({}, fromNetwork[0], {
+        currency: fromCurrency,
+        tokenValue: fromCurrency.tokenValue,
+        route: fromCurrency.route
+      });
+
+      var to = _extends({}, toNetwork[0], {
+        currency: toCurrency,
+        tokenValue: toCurrency.tokenValue,
+        route: toCurrency.route
+      });
+
       var resultStage = [];
       resultStage = ['initial'];
       return Promise.resolve(function () {
-        if (from.tokenValue && Number(to.tokenValue) > 0) {
+        if (from.tokenValue && Number(swapFee) > 0) {
           return _finallyRethrows(function () {
             return _catch(function () {
               function _temp6() {
@@ -7030,6 +7028,7 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
                     resStatus: [].concat(resultStage)
                   }));
                   setLoading(false);
+                  console.log('fetchPrice1', resultState);
                 }
 
                 var czzRes = 1;
@@ -7068,6 +7067,7 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
                 resStatus: [].concat(resultStage)
               }));
               setImpactPrice(0);
+              console.log('fetchPrice2', resultState);
               throw error;
             });
           }, function (_wasThrown, _result2) {
@@ -7080,7 +7080,7 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
     } catch (e) {
       return Promise.reject(e);
     }
-  }, [to.tokenValue]);
+  }, []);
   /**
    * @description: change price status 
    * @param { price : number } 
@@ -7114,17 +7114,18 @@ function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) 
         priceEffect: 'SWAP'
       };
     }
-  };
+  }; // useEffect(() => {
+  //   if (to.currency && to.tokenValue) {
+  //     fetchPrice()
+  //   }
+  // }, [to.tokenValue])
 
-  react.useEffect(function () {
-    if (to.currency && to.tokenValue) {
-      fetchPrice();
-    }
-  }, [to.tokenValue]);
+
   return {
     loading: loading,
     impactPrice: impactPrice,
-    resultState: resultState
+    resultState: resultState,
+    fetchPrice: fetchPrice
   };
 }
 
@@ -7243,7 +7244,7 @@ function useSwapAndBurn() {
       var swapResresult = _extends({}, recentItem, {
         status: 0,
         hash: hashRes
-      }, getHashUrl(from), {
+      }, getHashUrl(hashRes), {
         id: swapTime
       }); // setRecent([swapResresult, ...recent])
 

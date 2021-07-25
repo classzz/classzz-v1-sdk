@@ -16,6 +16,7 @@ export function useSwapAndBurn() {
   const [loading, setLoading] = useState(false)
   const [pending, setPending] = useState([])
 
+
   const stopPending = id => {
     setLoading(false)
     setPending(pending.filter(i => i.id !== id))
@@ -90,7 +91,7 @@ export function useSwapAndBurn() {
 
     const swapTranscationHash = hashRes => {
       console.log('Swap Hash Result ===', hashRes)
-      const swapResresult = { ...recentItem, status: 0, hash: hashRes, ...getHashUrl(from, to, hashRes), id: swapTime }
+      const swapResresult = { ...recentItem, status: 0, hash: hashRes, ...getHashUrl(hashRes), id: swapTime }
       // setRecent([swapResresult, ...recent])
       setHash(swapResresult)
       setPending([...pending, swapResresult])

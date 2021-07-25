@@ -1,11 +1,12 @@
-import { GetTokenValue } from './components/gettokenvalue'
-import { MidPrice } from './components/midprice'
-
+import React from 'react'
+import { CheckSwap } from './components/checkSwap'
+import { SwapConnect } from './components/swap'
 function App() {
   return (
     <div className="App">
-      <GetTokenValue />
-      <MidPrice />
+      <CheckSwap />
+
+      <SwapConnect />
     </div>
   );
 }

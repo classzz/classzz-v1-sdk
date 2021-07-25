@@ -82,7 +82,7 @@ export const fetchPairData = async (tokenA, tokenB, factoryAddress, initCodeHash
               }
  * }
  */
-export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
+export function useMidPrice() {
   const [loading, setLoading] = useState(false)
   const [impactPrice, setImpactPrice] = useState(0)
 
@@ -96,13 +96,6 @@ export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, sw
     price: '',
     resStatus: []
   })
-
-  const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
-  const toNetwork = networks.filter(i => i.networkType === toCurrency?.systemType)
-  const from = { ...fromNetwork[0], currency: fromCurrency, tokenValue: fromCurrency.tokenValue, route: fromCurrency.route }
-  const to = { ...toNetwork[0], currency: toCurrency, tokenValue: toCurrency.tokenValue, route: toCurrency.route }
-
-
   /**
    * @description: 
    * @param { CurrencyProps } lp          : swap token info must be from or to token
@@ -151,10 +144,14 @@ export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, sw
   /**
    * @description: main method 
    */
-  const fetchPrice = useCallback(async () => {
+  const fetchPrice = useCallback(async (fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) => {
+    const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
+    const toNetwork = networks.filter(i => i.networkType === toCurrency?.systemType)
+    const from = { ...fromNetwork[0], currency: fromCurrency, tokenValue: fromCurrency.tokenValue, route: fromCurrency.route }
+    const to = { ...toNetwork[0], currency: toCurrency, tokenValue: toCurrency.tokenValue, route: toCurrency.route }
     let resultStage = []
     resultStage = ['initial']
-    if (from.tokenValue && Number(to.tokenValue) > 0) {
+    if (from.tokenValue && Number(swapFee) > 0) {
       try {
         setLoading(true)
         resultStage = [...resultStage, 'loading', 'FINDING_PRICE_ING']
@@ -177,18 +174,19 @@ export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, sw
         const priceEffect = changePriceStatus(price)
         setResultState({ ...resultState, ethRes, czzRes, midPrice, midProce2, price, priceStatus: priceEffect.priceStatus, priceEffect: priceEffect.priceEffect, resStatus: [...resultStage] })
         setLoading(false)
-
+        console.log('fetchPrice1', resultState);
       } catch (error) {
         setLoading(false)
         resultStage = [...resultStage, 'NONE_TRADE']
         setResultState({ ...resultState, resStatus: [...resultStage] })
         setImpactPrice(0)
+        console.log('fetchPrice2', resultState);
         throw error
       } finally {
         setLoading(false)
       }
     }
-  }, [to.tokenValue])
+  }, [])
 
   /**
    * @description: change price status 
@@ -211,11 +209,11 @@ export function useMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, sw
     }
   }
 
-  useEffect(() => {
-    if (to.currency && to.tokenValue) {
-      fetchPrice()
-    }
-  }, [to.tokenValue])
+  // useEffect(() => {
+  //   if (to.currency && to.tokenValue) {
+  //     fetchPrice()
+  //   }
+  // }, [to.tokenValue])
 
-  return { loading, impactPrice, resultState }
+  return { loading, impactPrice, resultState, fetchPrice }
 }
