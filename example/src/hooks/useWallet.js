@@ -1,7 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import MetaMaskOnboarding from '@metamask/onboarding'
 import Web3 from 'web3'
-import networks from 'classzz-v1-sdk'
 
 export function useWallet(from) {
   const [loading, setLoading] = useState(false)
@@ -50,8 +49,8 @@ export function useWallet(from) {
   const handlenNewChainId = id => {
     let currentChainId = window?.ethereum?.currentIdentity?.chainId || id || window?.ethereum?.chainId
     currentChainId = detectMobile() ? Web3.utils.numberToHex(currentChainId) : currentChainId
-    const isSupportNetwork = networks.some(i => i.chainId === currentChainId)
-    console.log('handlenNewChainId', isSupportNetwork, currentChainId)
+    // const isSupportNetwork = networks.some(i => i.chainId === currentChainId)
+    // console.log('handlenNewChainId', isSupportNetwork, currentChainId)
     // setState({
     //   wallet: {
     //     ...wallet,
@@ -189,9 +188,9 @@ export function useWallet(from) {
 
   // bitkeep switch network
   const switchNetworkForBitkeep = chainId => {
-    const item = networks.filter(i => i.chainId === chainId)[0]
-    const chainName = item?.symbolName.toLowerCase()
-    chainName && window?.ethereum?.switchIdentity(chainName)
+    // const item = networks.filter(i => i.chainId === chainId)[0]
+    // const chainName = item?.symbolName.toLowerCase()
+    // chainName && window?.ethereum?.switchIdentity(chainName)
     // setState({
     //   isCurrentNetwork: true
     // })

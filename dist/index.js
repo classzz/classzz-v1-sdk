@@ -5364,6 +5364,22 @@ var IUniswapV2Router02 = [
 	}
 ];
 
+function _catch$2(body, recover) {
+  try {
+    var result = body();
+  } catch (e) {
+    return recover(e);
+  }
+
+  if (result && result.then) {
+    return result.then(void 0, recover);
+  }
+
+  return result;
+}
+
+var utils = Web3__default['default'].utils;
+var numberToHex$1 = utils.numberToHex;
 var getContract = function getContract(provider, address, abi) {
   if (abi === void 0) {
     abi = ABI_TOKEN;
@@ -5373,6 +5389,59 @@ var getContract = function getContract(provider, address, abi) {
   var contract = new web3.eth.Contract(abi, address);
   return contract;
 }; // token Infos
+// tokenAddress :from token
+// provider: from provider
+// abi: tokenAbi
+// spender: from router
+
+var allowance = function allowance(_ref3) {
+  var spender = _ref3.spender,
+      provider = _ref3.provider,
+      tokenAddress = _ref3.tokenAddress,
+      accounts = _ref3.accounts;
+
+  try {
+    var lpContract = getContract(provider, tokenAddress);
+    return Promise.resolve(_catch$2(function () {
+      return Promise.resolve(lpContract.methods.allowance(accounts, spender).call()).then(function (res) {
+        console.log('Allowance result=======', res);
+        return res;
+      });
+    }, function (error) {
+      console.warn(error);
+      return false;
+    }));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+}; // tokenAddress :from token
+// provider: from provider
+// abi: tokenAbi
+// spender: from router
+
+var approve = function approve(_ref4) {
+  var spender = _ref4.spender,
+      provider = _ref4.provider,
+      tokenAddress = _ref4.tokenAddress,
+      accounts = _ref4.accounts;
+
+  try {
+    var lpContract = getContract(provider, tokenAddress);
+    return Promise.resolve(_catch$2(function () {
+      var amount = numberToHex$1('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+      return Promise.resolve(lpContract.methods.approve(spender, amount).send({
+        from: accounts
+      })).then(function (res) {
+        console.log('approve result===', res);
+        return res;
+      });
+    }, function (error) {
+      throw error;
+    }));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+}; // 代币余额查询
 
 var insuranceNetwork = {
   ETH: {
@@ -6072,6 +6141,33 @@ function _catch$1(body, recover) {
 
   return result;
 }
+/**
+ * @description: before swap must call this method , and  authorization must true 
+ * @param { CurrencyProps } fromCurrency  swap from token info
+ * @param { currentProvider } currentProvider : current wallet provider
+ * @param { string } accounts user account info
+ * @return { 
+ *        approveLoading:boolean, 
+ *        authorization:boolean, 
+ *        approveResult:object, 
+ *        pending:string[] 
+ * }
+ */
+
+
+function _finallyRethrows$1(body, finalizer) {
+  try {
+    var result = body();
+  } catch (e) {
+    return finalizer(true, e);
+  }
+
+  if (result && result.then) {
+    return result.then(finalizer.bind(null, false), finalizer.bind(null, true));
+  }
+
+  return finalizer(false, result);
+}
 
 function _settle(pact, state, value) {
   if (!pact.s) {
@@ -6261,6 +6357,109 @@ function _for(test, update, body) {
     }
   }
 }
+
+var allowanceAction = function allowanceAction(fromCurrency, currentProvider, accounts) {
+  try {
+    var fromNetwork = networks.filter(function (i) {
+      return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+    });
+
+    var from = _extends({}, fromNetwork[0], {
+      tokenValue: fromCurrency.tokenValue,
+      currency: fromCurrency
+    });
+
+    var currency = from.currency,
+        spender = from.router,
+        tokenValue = from.tokenValue;
+    var tokenAddress = currency.tokenAddress;
+    return Promise.resolve(allowance({
+      provider: currentProvider,
+      tokenAddress: tokenAddress,
+      spender: spender,
+      accounts: accounts
+    })).then(function (allowanceTotal) {
+      var amountToken = new BigNumber__default['default'](decToBn(tokenValue));
+      var allonceNum = new BigNumber__default['default'](decToBn(allowanceTotal));
+      console.log('Allowance result==', allonceNum);
+      return allonceNum.comparedTo(amountToken) > 0;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+var useApproveActions = function useApproveActions() {
+  var _useState = react.useState(false),
+      approveLoading = _useState[0],
+      setApproveLoading = _useState[1];
+
+  var _useState2 = react.useState(true),
+      authorization = _useState2[0],
+      setAuthorization = _useState2[1];
+
+  var _useState3 = react.useState(),
+      approveResult = _useState3[0],
+      setApproveResult = _useState3[1];
+
+  var _useState4 = react.useState([]),
+      pending = _useState4[0],
+      setPending = _useState4[1];
+
+  var approveAction = function approveAction(fromCurrency, currentProvider, accounts) {
+    try {
+      return Promise.resolve(_finallyRethrows$1(function () {
+        return _catch$1(function () {
+          var fromNetwork = networks.filter(function (i) {
+            return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+          });
+
+          var from = _extends({}, fromNetwork[0], {
+            tokenValue: fromCurrency.tokenValue,
+            currency: fromCurrency
+          });
+
+          var spender = from.router;
+          setApproveLoading(true);
+          setPending([].concat(pending, ['approve']));
+          return Promise.resolve(approve({
+            provider: currentProvider,
+            tokenAddress: fromCurrency == null ? void 0 : fromCurrency.tokenAddress,
+            spender: spender,
+            accounts: accounts
+          })).then(function (res) {
+            console.log('Approve result ======', res);
+            setAuthorization(true);
+            setApproveLoading(false);
+            setPending(pending.filter(function (i) {
+              return i !== 'approve';
+            }));
+            setApproveResult(res); // })
+          });
+        }, function (error) {
+          setAuthorization(false);
+          throw error;
+        });
+      }, function (_wasThrown, _result) {
+        setApproveLoading(false);
+        setPending(pending.filter(function (i) {
+          return i !== 'approve';
+        }));
+        if (_wasThrown) throw _result;
+        return _result;
+      }));
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  };
+
+  return {
+    approveLoading: approveLoading,
+    authorization: authorization,
+    approveResult: approveResult,
+    pending: pending,
+    approveAction: approveAction
+  };
+};
 /**
  * @description: 
  * @param { CurrencyProps } fromCurrency  : swap from token info
@@ -7340,6 +7539,8 @@ function useSwapAndBurn() {
   };
 }
 
+exports.allowanceAction = allowanceAction;
+exports.useApproveActions = useApproveActions;
 exports.useGetTokenValue = useGetTokenValue;
 exports.useMidPrice = useMidPrice;
 exports.useSwapAndBurn = useSwapAndBurn;
