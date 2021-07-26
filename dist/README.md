@@ -13,19 +13,25 @@ npm install --save-dev classzz-v1-sdk
 or using yarn:
 
 ```sh
-yarn add classzz-v1-sdk -D
+yarn add classzz-v1-sdk
 ```
 ## use 
 
-import { useGetTokenValue,useMidPrice } from 'classzz-v1-sdk'
+import { useApproveActions, allowanceAction, 
+         useGetTokenValue, useMidPrice, useSwapAndBurn } from 'classzz-v1-sdk'
 
-    const { loading, resultState, insuranceStatus, isToCzz, routerFrom, routerTo, bestFromArr, bestToArr } = useGetTokenValue(from, to, "", true)
-
-    const { loading: midpriceStatus, impactPrice,resultState:midResult } = useMidPrice(from, to, bestFromArr, bestToArr, 118)
-
+    const { approveLoading, authorization, approveResult, pending, approveAction } = useApproveActions()
+    const { loading, resultState, insuranceStatus, isToCzz, routerFrom, routerTo, bestFromArr, bestToArr, swapTokenValue } = useGetTokenValue()
+    const { loading: midpriceStatus, impactPrice, resultState: midResult, fetchPrice } = useMidPrice()
     const { loading: swapling, receipt, hash, fetchSwap, setHash } = useSwapAndBurn()
-
-    fetchSwap(from, to, currentProvider, accounts, swapSetting, resultState.changeAmount, bestFromArr,false)
+    
+    swap step:
+    1、swapTokenValue  
+    2、fetchPrice     
+    3、check account  if  true  continue else end
+    4、approveAction  if true  continue  else must call 5、approveAction 
+    5、approveAction  if  true  continue  else end
+    6、fetchSwap
 
 ## dependencies
     "@ethersproject/address": "^5.4.0",

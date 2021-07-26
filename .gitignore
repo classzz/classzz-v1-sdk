@@ -7,5 +7,3 @@ yarn-error.log
 coverage
 .DS_store
 yarn.lock
-dist
-docs

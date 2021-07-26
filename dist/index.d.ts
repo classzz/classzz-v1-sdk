@@ -17,49 +17,42 @@ export interface ResultProps {
     resStatus: string[];
 }
 
-export interface InsuranceNetwork {
-    rpcURL: string;
-    tokenAddress: string;
-    securityPollAddress: string;
-    provider: object;
-}
-export const insuranceNetwork: {
-    [key: string]: InsuranceNetwork;
-}
-
-export declare const useApproveActions: (from: CurrencyProps, accounts: string) => Promise<{
+export declare const useApproveActions: () => {
     authorization: boolean;
     isApprove: boolean;
     approveLoading: boolean;
-}>;
-export declare const allowanceAction: (from: CurrencyProps, accounts: string) => Promise<boolean>;
-
-export declare function useGetTokenValue(fromCurrency: CurrencyProps, toCurrency: CurrencyProps, accounts: string, isInsurance: boolean): {
+    approveAction: (fromCurrency: CurrencyProps, currentProvider: provider, accounts: string) => Promise<void>;
+};
+export declare const allowanceAction: (fromCurrency: CurrencyProps, currentProvider: provider, accounts: string) => Promise<boolean>;
+export declare function useGetTokenValue(): {
     loading: boolean;
+    resultState: ResultProps;
     routerFrom: string[];
     routerTo: string[];
     insuranceStatus: boolean;
     bestFromArr: string[];
     bestToArr: string[];
     isToCzz: boolean;
-    resultState: ResultProps;
+    swapTokenValue: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, isInsurance: boolean) => Promise<false | undefined>;
 };
 
 export declare function getAddress(tokenA: Token, tokenB: Token, factoryAddreaa: string, initCodeHash: string): string;
 export declare const fetchPairData: (tokenA: Token, tokenB: Token, factoryAddress: string, initCodeHash: string, provider: provider) => Promise<void>;
-export declare function useMidPrice(fromCurrency: CurrencyProps, toCurrency: CurrencyProps, swapFee: string, bestFromArr: string[], bestToArr: string[]): {
+export declare function useMidPrice(): {
     loading: boolean;
     impactPrice: number;
     resultState: ResultProps;
+    fetchPrice: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, bestFromArr: string[], bestToArr: string[], swapFee: string) => Promise<void>;
 };
 interface SwapSettingProps {
     tolerance: number;
     deadline: number;
-};
+}
+
 export declare function useSwapAndBurn(): {
     loading: boolean;
-    receipt: any;
-    hash: any;
+    receipt: undefined;
+    hash: undefined;
     fetchSwap: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, currentProvider: provider, accounts: string, swapSetting: SwapSettingProps, changeAmount: string, bestFromArr: string[], isInsurance: boolean) => void;
-    setHash: import("react").Dispatch<import("react").SetStateAction<any>>;
+    setHash: import("react").Dispatch<import("react").SetStateAction<undefined>>;
 };
