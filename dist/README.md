@@ -17,13 +17,7 @@ yarn add classzz-v1-sdk
 ```
 ## use 
 
-import { useApproveActions, allowanceAction, 
-         useGetTokenValue, useMidPrice, useSwapAndBurn } from 'classzz-v1-sdk'
-
-    const { approveLoading, authorization, approveResult, pending, approveAction } = useApproveActions()
-    const { loading, resultState, insuranceStatus, isToCzz, routerFrom, routerTo, bestFromArr, bestToArr, swapTokenValue } = useGetTokenValue()
-    const { loading: midpriceStatus, impactPrice, resultState: midResult, fetchPrice } = useMidPrice()
-    const { loading: swapling, receipt, hash, fetchSwap, setHash } = useSwapAndBurn()
+    import { approveActions, allowanceAction, getTokenValue, getMidPrice ,swapAndBurn} from '../hooks/midPrice'  from 'classzz-v1-sdk'
     
     swap step:
     1、swapTokenValue  
@@ -39,10 +33,6 @@ import { useApproveActions, allowanceAction,
     "@ethersproject/networks": "^5.4.1",
     "@ethersproject/providers": "^5.4.1",
     "@ethersproject/solidity": "^5.4.0",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3",
-    "web-vitals": "^1.0.1",
     "@uniswap/sdk": "^3.0.3",
     "bignumber.js": "^9.0.1",
     "jsbi": "^3.1.5",

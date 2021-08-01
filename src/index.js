@@ -1,3 +1,3 @@
-export { useGetTokenValue, allowanceAction, useApproveActions } from './hooks/useGetTokenValue'
-export { useMidPrice } from './hooks/useMidPrice'
-export { useSwapAndBurn } from './hooks/useSwapAndBurn'
+export { getTokenValue, allowanceAction, approveActions } from './hooks/getTokenValue'
+export { getMidPrice } from './hooks/midPrice'
+export { swapAndBurn } from './hooks/swapAndBurn'

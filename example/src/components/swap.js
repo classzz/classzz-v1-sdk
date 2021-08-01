@@ -1,26 +1,51 @@
 import React, { useState, useEffect } from 'react'
 import { useWallet } from '../hooks/useWallet'
 import { useWalletConnect } from '../hooks/useWalletConnect'
-import { useApproveActions, allowanceAction, useGetTokenValue, useMidPrice, useSwapAndBurn } from 'classzz-v1-sdk'
-
+import { approveActions, allowanceAction, getTokenValue, getMidPrice, swapAndBurn } from 'classzz-v1-sdk'
 import metamaskSvg from '../asset/metamask-fox.svg'
 import walletSvg from '../asset/walletConnectIcon.svg'
 
-
-export const SwapConnect = () => {
-
+export const Connect = () => {
     const { connectWallet, currentProvider, disConnect } = useWallet()
     const { walletconnectAction } = useWalletConnect()
     const [accounts, setAccounts] = useState()
 
-    const { approveLoading, authorization, approveResult, pending, approveAction } = useApproveActions()
-    const { loading, resultState, insuranceStatus, isToCzz, routerFrom, routerTo, bestFromArr, bestToArr, swapTokenValue } = useGetTokenValue()
-    const { loading: midpriceStatus, impactPrice, resultState: midResult, fetchPrice } = useMidPrice()
-    const { loading: swapling, receipt, hash, fetchSwap, setHash } = useSwapAndBurn()
-
     const [isCanSwap, setIsCanSwap] = useState(false)
     const [canFetchPrice, SetCanFetchPrice] = useState(false)
     const [isAllowance, setIsAllowance] = useState(false)
+
+    const [resGetTokenValue, SetResGetTokenValue] = useState({
+        isToCzz: false,
+        routerFrom: [],
+        routerTo: [],
+        insuranceStatus: false,
+        bestFromArr: [],
+        bestToArr: [],
+        priceStatus: 0,
+        swapFee: 0,
+        fromTokenValue: "",
+        changeAmount: 0,
+        miniReceived: 0,
+        resStatus: []
+    })
+
+    const [resGetMidPrice, SetResGetMidPrice] = useState({
+        impactPrice: 0.0,
+        ethRes: 0.0,
+        czzRes: 0.0,
+        midPrice: 0.0,
+        midProce2: 0.0,
+        priceStatus: 0,
+        priceEffect: '',
+        price: '',
+        resStatus: []
+    })
+
+    const [resSwap, setResSwap] = useState({
+        receipt: null,
+        hash: null
+    })
+
 
     const swapSetting = { tolerance: 0.03, deadline: 5 }
 
@@ -52,33 +77,127 @@ export const SwapConnect = () => {
         if (newAccounts) setAccounts(newAccounts[0])
     }
 
-
-
-
-    useEffect(() => {
-        if (bestFromArr.length > 0 && bestToArr.length > 0 && resultState.swapFee > 0) {
-            SetCanFetchPrice(true)
-        }
-    }, [bestFromArr, bestToArr, resultState.swapFee])
-
     const swap = async () => {
-        if (accounts && bestFromArr.length > 0) {
-            const allow = await allowanceAction(from, currentProvider, accounts)
+        if (accounts && resGetTokenValue.bestFromArr.length > 0) {
 
-            if (allow) {
-                fetchSwap(from, to, currentProvider, accounts, swapSetting, resultState.changeAmount, bestFromArr, false)
+            if (isAllowance) {
+                const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue.changeAmount, resGetTokenValue.bestFromArr, false)
+                if (res.data) {
+                    setResSwap(res.data)
+                }
             } else {
                 approve()
             }
-            console.log('fetchSwap', receipt);
+            console.log('fetchSwap', resSwap);
         }
     }
 
     useEffect(() => {
-        if (isAllowance && resultState.changeAmount > 0 && resultState.swapFee > 0 && resultState.miniReceived > 0 && impactPrice > 0) {
+        if (isAllowance && resGetTokenValue.changeAmount > 0 && resGetTokenValue.swapFee > 0 && resGetTokenValue.miniReceived > 0 && resGetMidPrice.impactPrice > 0) {
             setIsCanSwap(true)
         }
-    }, [isAllowance, resultState, bestFromArr, midResult, impactPrice, accounts])
+    }, [isAllowance, resGetTokenValue, resGetMidPrice, accounts])
+
+    useEffect(() => {
+        if (resGetTokenValue.bestFromArr.length > 0 && resGetTokenValue.bestToArr.length > 0 && resGetTokenValue.swapFee > 0) {
+            SetCanFetchPrice(true)
+        }
+    }, [resGetTokenValue])
+
+
+    useEffect(() => {
+        console.log('receipt', resSwap?.receipt);
+        console.log('hash', resSwap?.hash);
+    }, [resSwap])
+
+    const swapTokenValue = async (e) => {
+        const res = await getTokenValue(from, to, true)
+        if (res.data) {
+            SetResGetTokenValue(res.data)
+        }
+    }
+
+    const fetchPrice = async (e) => {
+        const res = await getMidPrice(from, to, resGetTokenValue.bestFromArr, resGetTokenValue.bestToArr, resGetTokenValue.swapFee)
+        if (res.data) {
+            SetResGetMidPrice(res.data)
+        }
+    }
+
+    const swapTokenValueContent = (
+        <div>
+            < button onClick={(e) => {
+                swapTokenValue(e)
+                e.target.disabled = true
+            }}> 1、 useGetTokenValue</button >
+            <p>useGetTokenValue总状态：{resGetTokenValue?.resStatus.map((i) => { return i + "->" })}</p>
+            <p>FROM优化后路径：{resGetTokenValue?.bestFromArr.map((i) => { return i + "->" })}</p>
+            <p>TO优化后路径：{resGetTokenValue?.bestToArr.map((i) => { return i + "->" })}</p>
+            <p>FROM优化后路径：{resGetTokenValue?.routerFrom.map((i) => { return i + "->" })}</p>
+            <p>TO 优化后路径：{resGetTokenValue?.routerTo.map((i) => { return i + "->" })}</p>
+            <p>输入值：{resGetTokenValue?.fromTokenValue}</p>
+            <p>输出值：{resGetTokenValue?.miniReceived}</p>
+            <p>changeAmount：{resGetTokenValue?.changeAmount.toString()}</p>
+            <p>insuranceStatus：{resGetTokenValue?.insuranceStatus ? 'true' : 'false'}</p>
+            <p>isToCzz：{resGetTokenValue?.isToCzz ? 'true' : 'false'}</p>
+            <p>fee:{resGetTokenValue?.swapFee}</p>
+        </div>
+    )
+    const fetchPriceContent = (
+        <div>
+            < button onClick={(e) => {
+                fetchPrice(e)
+                e.target.disabled = true
+            }}> 2、useMidPrice</button >
+
+            <p>useMidPrice总状态：{resGetMidPrice?.resStatus.map((i) => { return i + "->" })}</p>
+            <p>impactPrice: {resGetMidPrice?.impactPrice}</p>
+            <p>czzRes: {resGetMidPrice?.czzRes}</p>
+            <p>ethRes: {resGetMidPrice?.ethRes}</p>
+            <p>price: {resGetMidPrice?.price}</p>
+            <p>midPrice: {resGetMidPrice?.midPrice}</p>
+            <p>midProce2: {resGetMidPrice?.midProce2}</p>
+            <p>priceStatus: {resGetMidPrice?.priceStatus}</p>
+            <p>priceEffect: {resGetMidPrice?.priceEffect}</p>
+
+        </div>
+    )
+
+    const allowance = async () => {
+        const res = await allowanceAction(from, currentProvider, accounts)
+        setIsAllowance(res.data.allow)
+        console.log('allowance', res);
+    }
+
+    const allowanceCheck = (
+        <button onClick={(e) => {
+            allowance()
+            e.target.disabled = true
+        }
+        }>3、allowance</button>
+    )
+
+    const approve = async () => {
+        const res = await approveActions(from, currentProvider, accounts)
+        if (res) {
+            console.log(res);
+
+        }
+    }
+
+    const approveCheck = (
+        <button onClick={(e) => {
+            approve()
+            e.target.disabled = true
+        }}>4、 approve</button>
+    )
+
+    const swapCheck = (
+        <button onClick={(e) => {
+            swap()
+            // e.target.disabled = true
+        }}>5、swap</button>
+    )
 
     const walletList = [
         {
@@ -124,59 +243,6 @@ export const SwapConnect = () => {
         </div>
     )
 
-    const swapTokenValueContent = (
-        < button onClick={(e) => {
-            swapTokenValue(from, to, true)
-            e.target.disabled = true
-
-        }}> 1、 useGetTokenValue</button >
-    )
-    const fetchPriceContent = (
-        < button onClick={(e) => {
-            fetchPrice(from, to, bestFromArr, bestToArr, resultState.swapFee)
-            e.target.disabled = true
-        }}> 2、useMidPrice</button >
-    )
-
-    const allowance = async () => {
-        const allow = await allowanceAction(from, currentProvider, accounts)
-        setIsAllowance(allow)
-        console.log('allowance', allow);
-    }
-
-    const allowanceCheck = (
-        <button onClick={(e) => {
-            allowance()
-            console.log(e);
-        }
-        }>3、allowance test</button>
-    )
-
-    const approve = async () => {
-        const res = await approveAction(from, currentProvider, accounts)
-        if (res) {
-            console.log(approveResult);
-        }
-    }
-
-    const approveCheck = (
-        <button onClick={(e) => {
-            approve()
-            e.target.disabled = true
-        }}>4、 approve</button>
-    )
-
-    const swapCheck = (
-        <button onClick={(e) => {
-            swap()
-            e.target.disabled = true
-        }}>5、swap</button>
-    )
-
-    useEffect(() => {
-        console.log('receipt', receipt);
-        console.log('hash', hash);
-    }, [receipt, hash])
 
     return (
         <div>
@@ -200,6 +266,5 @@ export const SwapConnect = () => {
         </div>
     )
 }
-
 
 

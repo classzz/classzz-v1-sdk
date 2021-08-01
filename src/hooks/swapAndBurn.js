@@ -1,54 +1,46 @@
-import { useState } from 'react'
 import { decToBn } from '../utils'
 import networks from '../utils/networks'
+import { czzAsync } from './czzAsync'
 import Web3 from 'web3'
 import BigNumber from "bignumber.js"
 const { numberToHex } = Web3.utils
-window.web3 = Web3
-window.BigNumber = BigNumber
 
 /**
  * @description: swap from one token to another
  */
-export function useSwapAndBurn() {
-  const [receipt, setReceipt] = useState(null)
-  const [hash, setHash] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [pending, setPending] = useState([])
 
 
-  const stopPending = id => {
-    setLoading(false)
-    setPending(pending.filter(i => i.id !== id))
-  }
+let state = {
+  receipt: null,
+  hash: null
+}
 
-  // reset swap token loop
-  const resSwap = () => {
+// reset swap token loop
+const resSwap = () => {
 
-  }
+}
 
-  // Swap Success
-  const swapSuccess = (from, to, receipt) => {
-    successMessage(from, to, receipt)
-    // debugger
-    // resSwap()
-  }
+// Swap Success
+const swapSuccess = (from, to, receipt) => {
+  successMessage(from, to, receipt)
+  // debugger
+  // resSwap()
+}
 
-  /**
-   * @description: swap main
-   * @param { CurrencyProps } fromCurrency      : swap from token info
-   * @param { CurrencyProps } toCurrency        : swap to token info
-   * @param { Web3.providers.HttpProvider } provider  : Web3.providers.HttpProvider
-   * @param { string } accounts                 : user account info
-   * @param { SwapSettingProps } swapSetting    : swap setting
-   * @param { number } changeAmount             : swap changeAmount
-   * @param { string[] } bestFromArr            : swap from token address array
-   * @param {boolean } isInsurance          : is use insurance
-   * 
-   */
-  const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) => {
-    setLoading(true)
-    // setButtonText('SWAP_ING')
+/**
+ * @description: swap main
+ * @param { CurrencyProps } fromCurrency      : swap from token info
+ * @param { CurrencyProps } toCurrency        : swap to token info
+ * @param { Web3.providers.HttpProvider } provider  : Web3.providers.HttpProvider
+ * @param { string } accounts                 : user account info
+ * @param { SwapSettingProps } swapSetting    : swap setting
+ * @param { number } changeAmount             : swap changeAmount
+ * @param { string[] } bestFromArr            : swap from token address array
+ * @param {boolean } isInsurance          : is use insurance
+ * 
+ */
+const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) => {
+  return new Promise(function (resolve, reject) {
     const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
     const toNetwork = networks.filter(i => i.networkType === toCurrency?.systemType)
     const from = { ...fromNetwork[0], currency: fromCurrency, tokenValue: fromCurrency.tokenValue, route: fromCurrency.route }
@@ -92,23 +84,24 @@ export function useSwapAndBurn() {
     const swapTranscationHash = hashRes => {
       console.log('Swap Hash Result ===', hashRes)
       const swapResresult = { ...recentItem, status: 0, hash: hashRes, ...getHashUrl(hashRes), id: swapTime }
-      // setRecent([swapResresult, ...recent])
-      setHash(swapResresult)
-      setPending([...pending, swapResresult])
+      state.hash = swapResresult
+      if (state.receipt) {
+        resolve(state)
+      }
     }
 
-    const swapReceipt = (receipt, id) => {
+    const swapReceipt = (receipt) => {
       console.log('Swap receipt Result ===> ', receipt)
-      setReceipt(receipt)
+      state.receipt = receipt
       swapSuccess(from, to, receipt)
-      stopPending(swapTime)
+      if (state.hash) {
+        resolve(state)
+      }
     }
 
     const swapError = (error) => {
-      setLoading(false)
-      stopPending(swapTime)
-      // setButtonText('SWAP')
       console.log('Swap Error ===>', error)
+      reject(error)
     }
 
     const lpSwap = (swaprouter, toaddress) => {
@@ -173,18 +166,23 @@ export function useSwapAndBurn() {
     if (to.currency.tokenAddress !== to.czz && isInsurance) {
       toaddress = toaddress + '#true'
     }
-
     if (from.currency.tokenAddress !== from.czz) {
       from.currency.tokenAddress ? lpSwap(swaprouter, toaddress) : ethSwap(swaprouter, toaddress)
     } else {
       czzSwap(toaddress)
     }
-  }
+  })
 
-  const successMessage = (from, to, res) => {
-    //todo callback function
-    console.log(`successMessage : Swap ${from?.currency.symbol} to ${to?.currency.symbol}  process url  ${from?.explorerUrl}tx/${res.transactionHash}`);
-  }
+}
 
-  return { loading, receipt, hash, fetchSwap, setHash }
+const successMessage = (from, to, res) => {
+  //todo callback function
+  console.log(`successMessage : Swap ${from?.currency.symbol} to ${to?.currency.symbol}  process url  ${from?.explorerUrl}tx/${res.transactionHash}`);
+}
+
+export const swapAndBurn = async (fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) => {
+  const { run } = czzAsync()
+  const res = await run(fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance))
+  console.log('SwapAndBurn result==', res);
+  return res
 }

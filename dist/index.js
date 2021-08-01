@@ -1,4 +1,3 @@
-var react = require('react');
 var BigNumber = require('bignumber.js');
 var Web3 = require('web3');
 var sdk = require('@uniswap/sdk');
@@ -6120,6 +6119,56 @@ var networks = [{
   image: 'https://cryptologos.cc/logos/binance-coin-bnb-logo.svg'
 }];
 
+var czzAsync = function czzAsync() {
+  var state = {
+    stat: "idle",
+    data: null,
+    error: null
+  };
+
+  var setData = function setData(data) {
+    state.data = data;
+    state.stat = "success";
+    state.error = null;
+  };
+
+  var setError = function setError(error) {
+    state.data = null;
+    state.stat = "error";
+    state.error = error;
+  }; // run 用来触发异步请求
+
+
+  var run = function run(promise) {
+    if (!promise || !promise.then) {
+      throw new Error("请传入 Promise 类型数据");
+    }
+
+    return promise.then(function (data) {
+      setData(data);
+      return _extends({
+        isIdle: state.stat === "idle",
+        isLoading: state.stat === "loading",
+        isError: state.stat === "error",
+        isSuccess: state.stat === "success"
+      }, state);
+    })["catch"](function (error) {
+      // catch会消化异常，如果不主动抛出，外面是接收不到异常的
+      setError(error);
+      return _extends({
+        isIdle: state.stat === "idle",
+        isLoading: state.stat === "loading",
+        isError: state.stat === "error",
+        isSuccess: state.stat === "success"
+      }, state);
+    });
+  };
+
+  return {
+    run: run
+  };
+};
+
 /**
  * @description: if  allowance  is true  can swap , else must call useApproveActions first
  * @param { CurrencyProps } fromCurrency      : swap from token info
@@ -6141,33 +6190,39 @@ function _catch$1(body, recover) {
 
   return result;
 }
-/**
- * @description: before swap must call this method , and  authorization must true 
- * @param { CurrencyProps } fromCurrency  swap from token info
- * @param { currentProvider } currentProvider : current wallet provider
- * @param { string } accounts user account info
- * @return { 
- *        approveLoading:boolean, 
- *        authorization:boolean, 
- *        approveResult:object, 
- *        pending:string[] 
- * }
- */
 
-
-function _finallyRethrows$1(body, finalizer) {
+var allowanceAsync = function allowanceAsync(fromCurrency, currentProvider, accounts) {
   try {
-    var result = body();
+    var fromNetwork = networks.filter(function (i) {
+      return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+    });
+
+    var from = _extends({}, fromNetwork[0], {
+      tokenValue: fromCurrency.tokenValue,
+      currency: fromCurrency
+    });
+
+    var currency = from.currency,
+        spender = from.router,
+        tokenValue = from.tokenValue;
+    var tokenAddress = currency.tokenAddress;
+    return Promise.resolve(allowance({
+      provider: currentProvider,
+      tokenAddress: tokenAddress,
+      spender: spender,
+      accounts: accounts
+    })).then(function (allowanceTotal) {
+      var amountToken = new BigNumber__default['default'](decToBn(tokenValue));
+      var allonceNum = new BigNumber__default['default'](decToBn(allowanceTotal));
+      console.log('Allowance result==', allonceNum);
+      return {
+        'allow': allonceNum.comparedTo(amountToken) > 0
+      };
+    });
   } catch (e) {
-    return finalizer(true, e);
+    return Promise.reject(e);
   }
-
-  if (result && result.then) {
-    return result.then(finalizer.bind(null, false), finalizer.bind(null, true));
-  }
-
-  return finalizer(false, result);
-}
+};
 
 function _settle(pact, state, value) {
   if (!pact.s) {
@@ -6198,6 +6253,19 @@ function _settle(pact, state, value) {
     }
   }
 }
+/**
+ * @description: before swap must call this method , and  authorization must true 
+ * @param { CurrencyProps } fromCurrency  swap from token info
+ * @param { currentProvider } currentProvider : current wallet provider
+ * @param { string } accounts user account info
+ * @return { 
+ *        approveLoading:boolean, 
+ *        authorization:boolean, 
+ *        approveResult:object, 
+ *        pending:string[] 
+ * }
+ */
+
 
 var _Pact = /*#__PURE__*/function () {
   function _Pact() {}
@@ -6360,105 +6428,76 @@ function _for(test, update, body) {
 
 var allowanceAction = function allowanceAction(fromCurrency, currentProvider, accounts) {
   try {
-    var fromNetwork = networks.filter(function (i) {
-      return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
-    });
+    var _czzAsync = czzAsync(),
+        run = _czzAsync.run;
 
-    var from = _extends({}, fromNetwork[0], {
-      tokenValue: fromCurrency.tokenValue,
-      currency: fromCurrency
-    });
-
-    var currency = from.currency,
-        spender = from.router,
-        tokenValue = from.tokenValue;
-    var tokenAddress = currency.tokenAddress;
-    return Promise.resolve(allowance({
-      provider: currentProvider,
-      tokenAddress: tokenAddress,
-      spender: spender,
-      accounts: accounts
-    })).then(function (allowanceTotal) {
-      var amountToken = new BigNumber__default['default'](decToBn(tokenValue));
-      var allonceNum = new BigNumber__default['default'](decToBn(allowanceTotal));
-      console.log('Allowance result==', allonceNum);
-      return allonceNum.comparedTo(amountToken) > 0;
-    });
+    return Promise.resolve(run(allowanceAsync(fromCurrency, currentProvider, accounts)));
   } catch (e) {
     return Promise.reject(e);
   }
 };
-var useApproveActions = function useApproveActions() {
-  var _useState = react.useState(false),
-      approveLoading = _useState[0],
-      setApproveLoading = _useState[1];
 
-  var _useState2 = react.useState(true),
-      authorization = _useState2[0],
-      setAuthorization = _useState2[1];
+var approveAsync = function approveAsync(fromCurrency, currentProvider, accounts) {
+  try {
+    var _exit2;
 
-  var _useState3 = react.useState(),
-      approveResult = _useState3[0],
-      setApproveResult = _useState3[1];
+    var _temp3 = function _temp3(_result) {
+      return _exit2 ? _result : {
+        'authorization': authorization,
+        'approveResult': approveResult
+      };
+    };
 
-  var _useState4 = react.useState([]),
-      pending = _useState4[0],
-      setPending = _useState4[1];
+    var authorization, approveResult;
 
-  var approveAction = function approveAction(fromCurrency, currentProvider, accounts) {
-    try {
-      return Promise.resolve(_finallyRethrows$1(function () {
-        return _catch$1(function () {
-          var fromNetwork = networks.filter(function (i) {
-            return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
-          });
+    var _temp4 = _catch$1(function () {
+      var fromNetwork = networks.filter(function (i) {
+        return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+      });
 
-          var from = _extends({}, fromNetwork[0], {
-            tokenValue: fromCurrency.tokenValue,
-            currency: fromCurrency
-          });
+      var from = _extends({}, fromNetwork[0], {
+        tokenValue: fromCurrency.tokenValue,
+        currency: fromCurrency
+      });
 
-          var spender = from.router;
-          setApproveLoading(true);
-          setPending([].concat(pending, ['approve']));
-          return Promise.resolve(approve({
-            provider: currentProvider,
-            tokenAddress: fromCurrency == null ? void 0 : fromCurrency.tokenAddress,
-            spender: spender,
-            accounts: accounts
-          })).then(function (res) {
-            console.log('Approve result ======', res);
-            setAuthorization(true);
-            setApproveLoading(false);
-            setPending(pending.filter(function (i) {
-              return i !== 'approve';
-            }));
-            setApproveResult(res); // })
-          });
-        }, function (error) {
-          setAuthorization(false);
-          throw error;
-        });
-      }, function (_wasThrown, _result) {
-        setApproveLoading(false);
-        setPending(pending.filter(function (i) {
-          return i !== 'approve';
-        }));
-        if (_wasThrown) throw _result;
-        return _result;
-      }));
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
+      var spender = from.router; // setApproveLoading(true)
+      // setPending([...pending, 'approve'])
 
-  return {
-    approveLoading: approveLoading,
-    authorization: authorization,
-    approveResult: approveResult,
-    pending: pending,
-    approveAction: approveAction
-  };
+      return Promise.resolve(approve({
+        provider: currentProvider,
+        tokenAddress: fromCurrency == null ? void 0 : fromCurrency.tokenAddress,
+        spender: spender,
+        accounts: accounts
+      })).then(function (res) {
+        // console.log('Approve result ======', res)
+        // setAuthorization(true)
+        // setApproveLoading(false)
+        // setPending(pending.filter(i => i !== 'approve'))
+        // setApproveResult(res)
+        authorization = true;
+        approveResult = res; // })
+      });
+    }, function (error) {
+      // setAuthorization(false)
+      authorization = false;
+      throw error;
+    });
+
+    return Promise.resolve(_temp4 && _temp4.then ? _temp4.then(_temp3) : _temp3(_temp4));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+var approveActions = function approveActions(fromCurrency, currentProvider, accounts) {
+  try {
+    var _czzAsync2 = czzAsync(),
+        run = _czzAsync2.run;
+
+    return Promise.resolve(run(approveAsync(fromCurrency, currentProvider, accounts)));
+  } catch (e) {
+    return Promise.reject(e);
+  }
 };
 /**
  * @description: 
@@ -6479,506 +6518,444 @@ var useApproveActions = function useApproveActions() {
 
  */
 
-function useGetTokenValue() {
-  var _useState5 = react.useState(false),
-      loading = _useState5[0],
-      setLoading = _useState5[1];
+var state$2 = {
+  isToCzz: false,
+  routerFrom: [],
+  routerTo: [],
+  insuranceStatus: false,
+  bestFromArr: [],
+  bestToArr: [],
+  priceStatus: 0,
+  swapFee: 0,
+  fromTokenValue: "",
+  changeAmount: 0,
+  miniReceived: 0,
+  resStatus: []
+};
+var newPools;
+var bestTokenArr;
+/**
+ * @description: insurance Status
+ * @param { CurrencyProps } to   : swap to token info
+ * @param { number } amount      : amount
+ * @return { insuranceStatus: boolean }
+ */
 
-  var _useState6 = react.useState(false),
-      isToCzz = _useState6[0],
-      setIsToCzz = _useState6[1];
+var changeInsuranceStatus = function changeInsuranceStatus(to, amount) {
+  try {
+    return Promise.resolve(function () {
+      if (to != null && to.networkType && amount) {
+        var decimals = 8;
+        var _insuranceNetwork$to$ = insuranceNetwork[to == null ? void 0 : to.networkType],
+            provider = _insuranceNetwork$to$.provider,
+            securityPollAddress = _insuranceNetwork$to$.securityPollAddress;
+        console.log(insuranceNetwork, provider, securityPollAddress);
+        var contract = getContract(provider, securityPollAddress, ABI_SECURITY_POOL);
+        var pid = Web3__default['default'].utils.numberToHex(0);
+        return Promise.resolve(contract.methods.poolInfo(pid).call()).then(function (poolInfo) {
+          var totalAmountBn = new BigNumber__default['default'](poolInfo.totalAmount);
+          var tenPowDec = new BigNumber__default['default'](10).pow(decimals);
+          poolInfo.totalAmountDisp = totalAmountBn.dividedBy(tenPowDec).toNumber();
+          console.log(poolInfo);
+          var status = new BigNumber__default['default'](poolInfo.totalAmount).comparedTo(new BigNumber__default['default'](amount)) > 0; // setInsuranceStatus(status)
 
-  var _useState7 = react.useState([]),
-      routerFrom = _useState7[0],
-      setRouterFrom = _useState7[1];
+          state$2.insuranceStatus = status;
+          return state$2;
+        });
+      }
+    }());
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+/**
+ * @description: Get Burn amount Post
+ * @param { CurrencyProps } pool         : swap token info must be from or to token
+ * @param { number } tokenValue          : swap token value 
+ * @param { boolean } isFrom             : only pool is from token then true , else  false
+ * @return {  maxResult: number }        : compute all possible swap path , get the maxResult  by interface getAmountsOut
+ */
 
-  var _useState8 = react.useState([]),
-      routerTo = _useState8[0],
-      setRouterTo = _useState8[1];
 
-  var _useState9 = react.useState(false),
-      insuranceStatus = _useState9[0],
-      setInsuranceStatus = _useState9[1];
+var swapBurnAmount = function swapBurnAmount(pool, tokenValue, isFrom) {
+  if (pool === void 0) {
+    pool = {};
+  }
 
-  var _useState10 = react.useState([]),
-      bestFromArr = _useState10[0],
-      setBestFromArr = _useState10[1];
+  if (isFrom === void 0) {
+    isFrom = false;
+  }
 
-  var _useState11 = react.useState([]),
-      bestToArr = _useState11[0],
-      setBestToArr = _useState11[1];
+  try {
+    return Promise.resolve(_catch$1(function () {
+      var _pool = pool,
+          czz = _pool.czz,
+          currency = _pool.currency,
+          provider = _pool.provider,
+          router = _pool.router,
+          networkName = _pool.networkName,
+          weth = _pool.weth;
+      var _pool$swap$pool$route = pool.swap[pool.route],
+          swaprouter = _pool$swap$pool$route.swaprouter,
+          currentToken = _pool$swap$pool$route.currentToken;
+      return Promise.resolve(new Web3__default['default'](provider)).then(function (contract) {
+        return Promise.resolve(new contract.eth.Contract(IUniswapV2Router02, swaprouter)).then(function (lpContract) {
+          function _temp7() {
+            maxResult = Math.max.apply(Math, resultEnd);
+            maxResetInd = resultEnd.findIndex(function (item) {
+              return item === maxResult;
+            });
+            bestTokenArr = tokenArray[maxResetInd];
+            isFrom ? state$2.bestFromArr = [].concat(bestTokenArr) : state$2.bestToArr = [].concat(bestTokenArr);
+            var nameArray = tokenArray[maxResetInd].map(function (item) {
+              var _newPools$find$symbol, _newPools$find;
 
-  var _useState12 = react.useState({
-    priceStatus: 0,
-    swapFee: 0,
-    fromTokenValue: "",
-    changeAmount: 0,
-    miniReceived: 0,
-    resStatus: []
-  }),
-      resultState = _useState12[0],
-      setResultState = _useState12[1];
+              return (_newPools$find$symbol = (_newPools$find = newPools.find(function (poolsItem) {
+                return poolsItem.tokenAddress === item;
+              })) == null ? void 0 : _newPools$find.symbol) != null ? _newPools$find$symbol : '';
+            });
+            isFrom ? state$2.routerFrom = [].concat(getRouter(pool, nameArray, 'FROM')) : state$2.routerTo = [].concat(getRouter(pool, nameArray, 'TO'));
+            console.log("SwapBurnGetAmount final result =", result);
+            return maxResult;
+          }
 
-  var newPools;
-  var bestTokenArr;
-  /**
-   * @description: insurance Status
-   * @param { CurrencyProps } to   : swap to token info
-   * @param { number } amount      : amount
-   * @return { insuranceStatus: boolean }
-   */
+          var tokenAddress = (currency == null ? void 0 : currency.tokenAddress) || currentToken || router;
+          var tokenArray = [];
+          var tokenObj = {};
 
-  var changeInsuranceStatus = function changeInsuranceStatus(to, amount) {
-    try {
-      var _temp2 = function () {
-        if (to != null && to.networkType && amount) {
-          var decimals = 8;
-          var _insuranceNetwork$to$ = insuranceNetwork[to == null ? void 0 : to.networkType],
-              provider = _insuranceNetwork$to$.provider,
-              securityPollAddress = _insuranceNetwork$to$.securityPollAddress;
-          console.log(insuranceNetwork, provider, securityPollAddress);
-          var contract = getContract(provider, securityPollAddress, ABI_SECURITY_POOL);
-          var pid = Web3__default['default'].utils.numberToHex(0);
-          return Promise.resolve(contract.methods.poolInfo(pid).call()).then(function (poolInfo) {
-            var totalAmountBn = new BigNumber__default['default'](poolInfo.totalAmount);
-            var tenPowDec = new BigNumber__default['default'](10).pow(decimals);
-            poolInfo.totalAmountDisp = totalAmountBn.dividedBy(tenPowDec).toNumber();
-            console.log(poolInfo);
-            var status = new BigNumber__default['default'](poolInfo.totalAmount).comparedTo(new BigNumber__default['default'](amount)) > 0;
-            setInsuranceStatus(status);
+          if (networkName === "HECO") {
+            tokenObj = {
+              htToken: '0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f',
+              ethToken: '0x64ff637fb478863b7468bc97d30a5bf3a428a1fd',
+              dogToken: '0x099626783842d35c221e5d01694c2b928eb3b0ad',
+              haiToken: '0x7663bc3ae9858cae71722aedee364e125c278bdf'
+            };
+          } else if (networkName === "ETH") {
+            tokenObj = {
+              ethToken: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
+            };
+          } else if (networkName === "BSC") {
+            tokenObj = {
+              bnbToken: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
+              ethToken: '0x2170ed0880ac9a755fd29b2688956bd959f933f8'
+            };
+          }
+
+          var tokenamount = Web3__default['default'].utils.numberToHex(new BigNumber__default['default'](tokenValue));
+          tokenArray.push(isFrom ? [tokenAddress, czz] : [czz, tokenAddress]);
+
+          for (var _i in tokenObj) {
+            tokenArray.push(isFrom ? [tokenAddress, tokenObj[_i], czz] : [czz, tokenObj[_i], tokenAddress]);
+          }
+
+          var result = [];
+          var resultEnd = [];
+          var maxResult;
+          var maxResetInd;
+          var i = 0,
+              len = tokenArray.length;
+
+          var _temp6 = _for(function () {
+            return i < len;
+          }, function () {
+            return i++;
+          }, function () {
+            var _temp5 = _catch$1(function () {
+              return Promise.resolve(lpContract.methods.getAmountsOut(tokenamount, tokenArray[i]).call(null)).then(function (_lpContract$methods$g) {
+                result[i] = _lpContract$methods$g;
+                resultEnd[i] = Number(result[i][result[i].length - 1]);
+              });
+            }, function () {
+              result[i] = [0];
+              resultEnd[i] = 0;
+            });
+
+            if (_temp5 && _temp5.then) return _temp5.then(function () {});
           });
-        }
-      }();
 
-      return Promise.resolve(_temp2 && _temp2.then ? _temp2.then(function () {}) : void 0);
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  /**
-   * @description: Get Burn amount Post
-   * @param { CurrencyProps } pool         : swap token info must be from or to token
-   * @param { number } tokenValue          : swap token value 
-   * @param { boolean } isFrom             : only pool is from token then true , else  false
-   * @return {  maxResult: number }        : compute all possible swap path , get the maxResult  by interface getAmountsOut
-   */
+          return _temp6 && _temp6.then ? _temp6.then(_temp7) : _temp7(_temp6);
+        });
+      });
+    }, function (error) {
+      throw error;
+    }));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+/**
+ * @description: compute swap casting amount
+ * @param { CurrencyProps } pool         : swap token info must be from or to token 
+ * @param { boolean } setRouter          : is set swap router
+ * @return { reust: number }             : swap casting amount
+ */
 
 
-  var swapBurnAmount = function swapBurnAmount(pool, tokenValue, isFrom) {
-    if (pool === void 0) {
-      pool = {};
-    }
+var swapCastingAmount = function swapCastingAmount(pool, isInsurance, isToCzz, setRouter) {
+  if (pool === void 0) {
+    pool = {};
+  }
 
-    if (isFrom === void 0) {
-      isFrom = false;
-    }
+  try {
+    return Promise.resolve(_catch$1(function () {
+      var _pool2 = pool,
+          czz = _pool2.czz,
+          provider = _pool2.provider,
+          networkName = _pool2.networkName,
+          weth = _pool2.weth;
+      var _pool$swap$pool$route2 = pool.swap[pool.route],
+          swaprouter = _pool$swap$pool$route2.swaprouter,
+          currentToken = _pool$swap$pool$route2.currentToken;
+      return Promise.resolve(new Web3__default['default'](provider)).then(function (contract) {
+        return Promise.resolve(contract.eth.getGasPrice(function (price) {
+          return price;
+        })).then(function (gasPrice) {
+          var gas = gasPrice * 800000;
 
-    try {
-      return Promise.resolve(_catch$1(function () {
-        var _pool = pool,
-            czz = _pool.czz,
-            currency = _pool.currency,
-            provider = _pool.provider,
-            router = _pool.router,
-            networkName = _pool.networkName,
-            weth = _pool.weth;
-        var _pool$swap$pool$route = pool.swap[pool.route],
-            swaprouter = _pool$swap$pool$route.swaprouter,
-            currentToken = _pool$swap$pool$route.currentToken;
-        return Promise.resolve(new Web3__default['default'](provider)).then(function (contract) {
+          if (networkName === "HECO") {
+            gas = gasPrice * 1500000;
+          }
+
+          if (networkName === "BSC") {
+            gas = gasPrice * 2500000;
+          } // debugger
+
+
+          if (networkName === "BSC" && isInsurance && !isToCzz) {
+            gas = gasPrice * 500000;
+          }
+
+          if (networkName === "HECO" && isInsurance && !isToCzz) {
+            gas = gasPrice * 500000;
+          }
+
+          if (networkName === "ETH" && isInsurance && !isToCzz) {
+            gas = gasPrice * 400000;
+          }
+
+          var result_1 = new BigNumber__default['default'](Number(gas)).toString();
           return Promise.resolve(new contract.eth.Contract(IUniswapV2Router02, swaprouter)).then(function (lpContract) {
-            function _temp5() {
-              maxResult = Math.max.apply(Math, resultEnd);
-              maxResetInd = resultEnd.findIndex(function (item) {
-                return item === maxResult;
-              });
-              bestTokenArr = tokenArray[maxResetInd];
-              isFrom ? setBestFromArr(bestTokenArr) : setBestToArr(bestTokenArr);
-              var nameArray = tokenArray[maxResetInd].map(function (item) {
-                var _newPools$find$symbol, _newPools$find;
-
-                return (_newPools$find$symbol = (_newPools$find = newPools.find(function (poolsItem) {
-                  return poolsItem.tokenAddress === item;
-                })) == null ? void 0 : _newPools$find.symbol) != null ? _newPools$find$symbol : '';
-              });
-              isFrom ? setRouterFrom(getRouter(pool, nameArray, 'FROM')) : setRouterTo(getRouter(pool, nameArray, 'TO'));
-              console.log("SwapBurnGetAmount final result =", result);
-              return maxResult;
-            }
-
-            var tokenAddress = (currency == null ? void 0 : currency.tokenAddress) || currentToken || router;
             var tokenArray = [];
-            var tokenObj = {};
 
             if (networkName === "HECO") {
-              tokenObj = {
-                htToken: '0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f',
-                ethToken: '0x64ff637fb478863b7468bc97d30a5bf3a428a1fd',
-                dogToken: '0x099626783842d35c221e5d01694c2b928eb3b0ad',
-                haiToken: '0x7663bc3ae9858cae71722aedee364e125c278bdf'
-              };
-            } else if (networkName === "ETH") {
-              tokenObj = {
-                ethToken: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-              };
-            } else if (networkName === "BSC") {
-              tokenObj = {
-                bnbToken: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
-                ethToken: '0x2170ed0880ac9a755fd29b2688956bd959f933f8'
-              };
+              tokenArray = [currentToken, weth, czz];
+            } else {
+              tokenArray = [currentToken, czz];
             }
 
-            var tokenamount = Web3__default['default'].utils.numberToHex(new BigNumber__default['default'](tokenValue));
-            tokenArray.push(isFrom ? [tokenAddress, czz] : [czz, tokenAddress]);
-
-            for (var _i in tokenObj) {
-              tokenArray.push(isFrom ? [tokenAddress, tokenObj[_i], czz] : [czz, tokenObj[_i], tokenAddress]);
-            }
-
-            var result = [];
-            var resultEnd = [];
-            var maxResult;
-            var maxResetInd;
-            var i = 0,
-                len = tokenArray.length;
-
-            var _temp4 = _for(function () {
-              return i < len;
-            }, function () {
-              return i++;
-            }, function () {
-              var _temp3 = _catch$1(function () {
-                return Promise.resolve(lpContract.methods.getAmountsOut(tokenamount, tokenArray[i]).call(null)).then(function (_lpContract$methods$g) {
-                  result[i] = _lpContract$methods$g;
-                  resultEnd[i] = Number(result[i][result[i].length - 1]);
-                });
-              }, function () {
-                result[i] = [0];
-                resultEnd[i] = 0;
-              });
-
-              if (_temp3 && _temp3.then) return _temp3.then(function () {});
-            });
-
-            return _temp4 && _temp4.then ? _temp4.then(_temp5) : _temp5(_temp4);
-          });
-        });
-      }, function (error) {
-        throw error;
-      }));
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  /**
-   * @description: compute swap casting amount
-   * @param { CurrencyProps } pool         : swap token info must be from or to token 
-   * @param { boolean } setRouter          : is set swap router
-   * @return { reust: number }             : swap casting amount
-   */
-
-
-  var swapCastingAmount = function swapCastingAmount(pool, isInsurance, setRouter) {
-    if (pool === void 0) {
-      pool = {};
-    }
-
-    try {
-      return Promise.resolve(_catch$1(function () {
-        var _pool2 = pool,
-            czz = _pool2.czz,
-            provider = _pool2.provider,
-            networkName = _pool2.networkName,
-            weth = _pool2.weth;
-        var _pool$swap$pool$route2 = pool.swap[pool.route],
-            swaprouter = _pool$swap$pool$route2.swaprouter,
-            currentToken = _pool$swap$pool$route2.currentToken;
-        return Promise.resolve(new Web3__default['default'](provider)).then(function (contract) {
-          return Promise.resolve(contract.eth.getGasPrice(function (price) {
-            return price;
-          })).then(function (gasPrice) {
-            var gas = gasPrice * 800000;
-
-            if (networkName === "HECO") {
-              gas = gasPrice * 1500000;
-            }
-
-            if (networkName === "BSC") {
-              gas = gasPrice * 2500000;
-            } // debugger
-
-
-            if (networkName === "BSC" && isInsurance && !isToCzz) {
-              gas = gasPrice * 500000;
-            }
-
-            if (networkName === "HECO" && isInsurance && !isToCzz) {
-              gas = gasPrice * 500000;
-            }
-
-            if (networkName === "ETH" && isInsurance && !isToCzz) {
-              gas = gasPrice * 400000;
-            }
-
-            var result_1 = new BigNumber__default['default'](Number(gas)).toString();
-            return Promise.resolve(new contract.eth.Contract(IUniswapV2Router02, swaprouter)).then(function (lpContract) {
-              var tokenArray = [];
-
-              if (networkName === "HECO") {
-                tokenArray = [currentToken, weth, czz];
-              } else {
-                tokenArray = [currentToken, czz];
-              }
-
-              return Promise.resolve(lpContract.methods.getAmountsOut(result_1, tokenArray).call(null)).then(function (result) {
-                console.log("SwapBurnGetAmount result ===", result);
-                return result[result.length - 1];
-              });
+            return Promise.resolve(lpContract.methods.getAmountsOut(result_1, tokenArray).call(null)).then(function (result) {
+              console.log("SwapBurnGetAmount result ===", result);
+              return result[result.length - 1];
             });
           });
         });
-      }, function (error) {
-        throw error;
-      }));
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  /**
-   * @description: main method : swap token value info
-   * @param { CurrencyProps } from          : swap from token info
-   * @param { CurrencyProps } to            : swap from token info
-   * @return { resultState : object}        : main method return all info
-   */
-
-
-  var swapTokenValue = function swapTokenValue(fromCurrency, toCurrency, isInsurance) {
-    try {
-      var _exit2;
-
-      var fromNetwork = networks.filter(function (i) {
-        return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
       });
-      var toNetwork = networks.filter(function (i) {
-        return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
-      });
+    }, function (error) {
+      throw error;
+    }));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+/**
+ * @description: main method : swap token value info
+ * @param { CurrencyProps } from          : swap from token info
+ * @param { CurrencyProps } to            : swap from token info
+ * @return { resultState : object}        : main method return all info
+ */
 
-      var from = _extends({}, fromNetwork[0], {
-        currency: fromCurrency,
-        tokenValue: fromCurrency.tokenValue,
-        route: fromCurrency.route
-      });
 
-      var to = _extends({}, toNetwork[0], {
-        currency: toCurrency,
-        tokenValue: toCurrency.tokenValue,
-        route: toCurrency.route
-      });
+var swapTokenValue = function swapTokenValue(fromCurrency, toCurrency, isInsurance) {
+  try {
+    var _exit4;
 
-      newPools = [].concat(pools, [fromCurrency, toCurrency]);
-      var resultStage = [];
-      resultStage = [].concat(resultStage, ['initial']);
-      return Promise.resolve(function () {
-        if (from && from != null && from.currency && to != null && to.currency && from != null && from.tokenValue && Number(from == null ? void 0 : from.tokenValue) > 0) {
-          return _catch$1(function () {
-            function _temp10(_result2) {
-              if (_exit2) return _result2;
+    var fromNetwork = networks.filter(function (i) {
+      return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+    });
+    var toNetwork = networks.filter(function (i) {
+      return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
+    });
 
-              function _temp8() {
-                var _to$currency, _to$currency2;
+    var from = _extends({}, fromNetwork[0], {
+      currency: fromCurrency,
+      tokenValue: fromCurrency.tokenValue,
+      route: fromCurrency.route
+    });
 
-                console.log("SWAP AMOUNT ==", from.tokenValue, "miniReceived", miniReceived);
-                resultStage = [].concat(resultStage, ['end']);
-                setResultState(_extends({}, resultState, {
-                  fromTokenValue: from.tokenValue,
-                  miniReceived: miniReceived,
-                  swapFee: swapFee,
-                  changeAmount: changeAmount,
-                  resStatus: [].concat(resultStage)
-                }));
-                setLoading(false);
-                setIsToCzz(to != null && (_to$currency = to.currency) != null && _to$currency.symbol ? (to == null ? void 0 : (_to$currency2 = to.currency) == null ? void 0 : _to$currency2.symbol.indexOf('CZZ')) !== -1 : false);
-              }
+    var to = _extends({}, toNetwork[0], {
+      currency: toCurrency,
+      tokenValue: toCurrency.tokenValue,
+      route: toCurrency.route
+    });
 
-              var swapFee = 0;
-              var miniReceived = 0;
-              var tokenAddress = to.currency.tokenAddress ? to.currency.tokenAddress : to.currentToken;
-              var totoken = new sdk.Token(to.networkId, tokenAddress, to.currency.decimals);
-              console.log(to.currency.tokenAddress, to.czz);
+    state$2.insuranceStatus = isInsurance;
+    newPools = [].concat(pools, [fromCurrency, toCurrency]);
+    var resultStage = [];
+    resultStage = [].concat(resultStage, ['initial']);
+    return Promise.resolve(function () {
+      if (from && from != null && from.currency && to != null && to.currency && from != null && from.tokenValue && Number(from == null ? void 0 : from.tokenValue) > 0) {
+        var _temp14 = _catch$1(function () {
+          var _to$currency, _to$currency2;
 
-              var _temp7 = function () {
-                if (to.currency.tokenAddress !== to.czz) {
-                  return Promise.resolve(swapBurnAmount(to, changeAmount, false)).then(function (result) {
-                    return Promise.resolve(swapCastingAmount(to, isInsurance, false)).then(function (czzfee) {
-                      var changeAmount2 = changeAmount - czzfee;
-                      resultStage = [].concat(resultStage, ['to1']);
-                      setResultState(_extends({}, resultState, {
-                        resStatus: [].concat(resultStage)
-                      }));
+          function _temp12(_result3) {
+            if (_exit4) return _result3;
 
-                      var _temp6 = function () {
-                        if (changeAmount2 > 0) {
-                          return Promise.resolve(swapBurnAmount(to, changeAmount2, false)).then(function (result1) {
-                            var amounts1 = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(result1));
-                            swapFee = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(result - result1)).toSignificant(6);
-                            miniReceived = amounts1.toSignificant(6);
-                            resultStage = [].concat(resultStage, ['to2']);
-                            setResultState(_extends({}, resultState, {
-                              resStatus: [].concat(resultStage)
-                            }));
-                          });
-                        }
-                      }();
-
-                      if (_temp6 && _temp6.then) return _temp6.then(function () {});
-                    });
-                  });
-                } else {
-                  resultStage = [].concat(resultStage, ['to3']);
-                  setResultState(_extends({}, resultState, {
-                    resStatus: [].concat(resultStage)
-                  }));
-                  return Promise.resolve(swapCastingAmount(to, isInsurance, true)).then(function (czzfee) {
-                    if (changeAmount - czzfee < 0) {
-                      miniReceived = 0;
-                    } else {
-                      var nameArray = [to.currency.name];
-                      setRouterTo(nameArray);
-                      var amounts2 = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(changeAmount - czzfee));
-                      swapFee = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(czzfee)).toSignificant(6);
-                      miniReceived = amounts2.toSignificant(6);
-                    }
-                  });
-                }
-              }();
-
-              return _temp7 && _temp7.then ? _temp7.then(_temp8) : _temp8(_temp7);
+            function _temp10() {
+              console.log("SWAP AMOUNT ==", from.tokenValue, "miniReceived", miniReceived);
+              resultStage = [].concat(resultStage, ['end']);
+              state$2.fromTokenValue = from.tokenValue;
+              state$2.miniReceived = miniReceived;
+              state$2.swapFee = swapFee;
+              state$2.changeAmount = changeAmount;
+              state$2.resStatus = [].concat(resultStage);
             }
 
-            setLoading(true);
-            resultStage = [].concat(resultStage, ['loading']);
-            setResultState(_extends({}, resultState, {
-              priceStatus: 0,
-              resStatus: [].concat(resultStage)
-            }));
-            var changeAmount = 0;
-            var inAmount = decToBn(from.tokenValue, from.currency.decimals).toString();
-            changeInsuranceStatus(to);
+            var swapFee = 0;
+            var miniReceived = 0;
+            var tokenAddress = to.currency.tokenAddress ? to.currency.tokenAddress : to.currentToken;
+            var totoken = new sdk.Token(to.networkId, tokenAddress, to.currency.decimals);
+            console.log(to.currency.tokenAddress, to.czz);
 
             var _temp9 = function () {
-              if (from.currency.tokenAddress !== from.czz) {
-                console.log('inAmount == ', inAmount);
-                return Promise.resolve(swapBurnAmount(from, inAmount, true)).then(function (inAmountRes) {
-                  changeAmount = new BigNumber__default['default'](inAmountRes);
-                  console.log('inAmountExchangeValue == ', changeAmount.toString());
-                  resultStage = [].concat(resultStage, ['from']);
-                  setResultState(_extends({}, resultState, {
-                    resStatus: [].concat(resultStage)
-                  }));
+              if (to.currency.tokenAddress !== to.czz) {
+                return Promise.resolve(swapBurnAmount(to, changeAmount, false)).then(function (result) {
+                  return Promise.resolve(swapCastingAmount(to, isInsurance, state$2.isToCzz, false)).then(function (czzfee) {
+                    var changeAmount2 = changeAmount - czzfee;
+                    resultStage = [].concat(resultStage, ['to1']);
 
-                  if (changeAmount === "0") {
-                    resultStage = [].concat(resultStage, ['NONE_TRADE']);
-                    setResultState(_extends({}, resultState, {
-                      resStatus: [].concat(resultStage)
-                    }));
-                    setLoading(false);
-                    _exit2 = 1;
-                    return false;
-                  }
+                    var _temp8 = function () {
+                      if (changeAmount2 > 0) {
+                        return Promise.resolve(swapBurnAmount(to, changeAmount2, false)).then(function (result1) {
+                          var amounts1 = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(result1));
+                          swapFee = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(result - result1)).toSignificant(6);
+                          miniReceived = amounts1.toSignificant(6);
+                          resultStage = [].concat(resultStage, ['to2']);
+                        });
+                      }
+                    }();
+
+                    if (_temp8 && _temp8.then) return _temp8.then(function () {});
+                  });
                 });
               } else {
-                // from: HCZZ;BCZZ;ECZZ
-                resultStage = [].concat(resultStage, ['from2']);
-                setResultState(_extends({}, resultState, {
-                  resStatus: [].concat(resultStage)
-                }));
-                var nameArray = [from.currency.name];
-                setRouterFrom(nameArray);
-                changeAmount = new BigNumber__default['default'](inAmount);
+                resultStage = [].concat(resultStage, ['to3']);
+                return Promise.resolve(swapCastingAmount(to, isInsurance, state$2.isToCzz, true)).then(function (czzfee) {
+                  if (changeAmount - czzfee < 0) {
+                    miniReceived = 0;
+                  } else {
+                    var nameArray = [to.currency.name];
+                    state$2.routerTo = [].concat(nameArray);
+                    var amounts2 = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(changeAmount - czzfee));
+                    swapFee = new sdk.TokenAmount(totoken, JSBI__default['default'].BigInt(czzfee)).toSignificant(6);
+                    miniReceived = amounts2.toSignificant(6);
+                  }
+                });
               }
             }();
 
             return _temp9 && _temp9.then ? _temp9.then(_temp10) : _temp10(_temp9);
-          }, function (error) {
-            var _to$currency3, _to$currency4;
+          }
 
-            resultStage = [].concat(resultStage, ['NONE_TRADE']);
-            setResultState(_extends({}, resultState, {
-              resStatus: [].concat(resultStage)
-            }));
-            setLoading(false);
-            setIsToCzz(to != null && (_to$currency3 = to.currency) != null && _to$currency3.symbol ? (to == null ? void 0 : (_to$currency4 = to.currency) == null ? void 0 : _to$currency4.symbol.indexOf('CZZ')) !== -1 : false);
-            throw error;
-          });
-        }
-      }());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  /**
-   * @description: replace token name where is ''
-   * @param { CurrencyProps } pool         : swap token info must be from or to token
-   * @param { string[] } arr               : swap token name array
-   * @param { string : 'FROM'|'TO' } type  : swap token name type must be 'FROM' or 'TO'
-   * @return { string[] }                  : get new token name array 
-   */
+          state$2.isToCzz = to != null && (_to$currency = to.currency) != null && _to$currency.symbol ? (to == null ? void 0 : (_to$currency2 = to.currency) == null ? void 0 : _to$currency2.symbol.indexOf('CZZ')) !== -1 : false;
+          resultStage = [].concat(resultStage, ['loading']);
+          var changeAmount = 0;
+          var inAmount = decToBn(from.tokenValue, from.currency.decimals).toString();
+          changeInsuranceStatus(to);
 
+          var _temp11 = function () {
+            if (from.currency.tokenAddress !== from.czz) {
+              console.log('inAmount == ', inAmount);
+              return Promise.resolve(swapBurnAmount(from, inAmount, true)).then(function (inAmountRes) {
+                changeAmount = new BigNumber__default['default'](inAmountRes);
+                console.log('inAmountExchangeValue == ', changeAmount.toString());
+                resultStage = [].concat(resultStage, ['from']);
 
-  var getRouter = function getRouter(pool, arr, type) {
-    var _pool3, _pool3$currency;
+                if (changeAmount === "0") {
+                  resultStage = [].concat(resultStage, ['NONE_TRADE']);
+                  _exit4 = 1;
+                  return false;
+                }
+              });
+            } else {
+              // from: HCZZ;BCZZ;ECZZ
+              resultStage = [].concat(resultStage, ['from2']);
+              var nameArray = [from.currency.name];
+              state$2.routerFrom = [].concat(nameArray);
+              changeAmount = new BigNumber__default['default'](inAmount);
+            }
+          }();
 
-    if (pool === void 0) {
-      pool = {};
-    }
+          return _temp11 && _temp11.then ? _temp11.then(_temp12) : _temp12(_temp11);
+        }, function (error) {
+          resultStage = [].concat(resultStage, ['NONE_TRADE']);
+          state$2.resStatus = [].concat(resultStage);
+          throw error;
+        });
 
-    var newArr = [].concat(arr);
-    var systemType = (_pool3 = pool) == null ? void 0 : (_pool3$currency = _pool3.currency) == null ? void 0 : _pool3$currency.systemType;
-
-    if (newArr.includes('')) {
-      var ind = newArr.findIndex(function (item) {
-        return !item;
-      });
-
-      switch (systemType) {
-        case 'HECO':
-          newArr[ind] = 'HT';
-          break;
-
-        case 'ETH':
-          newArr[ind] = 'ETH';
-          break;
-
-        case 'BSC':
-          newArr[ind] = 'BNB';
-          break;
+        return _temp14 && _temp14.then ? _temp14.then(function (_result4) {
+          return _exit4 ? _result4 : state$2;
+        }) : _exit4 ? _temp14 : state$2;
       }
+    }());
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+/**
+ * @description: replace token name where is ''
+ * @param { CurrencyProps } pool         : swap token info must be from or to token
+ * @param { string[] } arr               : swap token name array
+ * @param { string : 'FROM'|'TO' } type  : swap token name type must be 'FROM' or 'TO'
+ * @return { string[] }                  : get new token name array 
+ */
+
+
+var getRouter = function getRouter(pool, arr, type) {
+  var _pool3, _pool3$currency;
+
+  if (pool === void 0) {
+    pool = {};
+  }
+
+  var newArr = [].concat(arr);
+  var systemType = (_pool3 = pool) == null ? void 0 : (_pool3$currency = _pool3.currency) == null ? void 0 : _pool3$currency.systemType;
+
+  if (newArr.includes('')) {
+    var ind = newArr.findIndex(function (item) {
+      return !item;
+    });
+
+    switch (systemType) {
+      case 'HECO':
+        newArr[ind] = 'HT';
+        break;
+
+      case 'ETH':
+        newArr[ind] = 'ETH';
+        break;
+
+      case 'BSC':
+        newArr[ind] = 'BNB';
+        break;
     }
+  }
 
-    return newArr;
-  }; // useEffect(() => {
-  //   setIsToCzz(to?.currency?.symbol ? to?.currency?.symbol.indexOf('CZZ') !== -1 : false)
-  // }, [to?.currency?.symbol])
-  // Get token Value Effect
-  // useEffect(() => {
-  //   if (from.currency && from?.tokenValue && to.currency?.symbol) {
-  //     swapTokenValue(from, to)
-  //   }
-  // }, [from.tokenValue])
+  return newArr;
+};
 
+var getTokenValue = function getTokenValue(fromCurrency, toCurrency, isInsurance) {
+  try {
+    var _czzAsync3 = czzAsync(),
+        run = _czzAsync3.run;
 
-  return {
-    loading: loading,
-    resultState: resultState,
-    insuranceStatus: insuranceStatus,
-    isToCzz: isToCzz,
-    routerFrom: routerFrom,
-    routerTo: routerTo,
-    bestFromArr: bestFromArr,
-    bestToArr: bestToArr,
-    swapTokenValue: swapTokenValue
-  };
-}
+    return Promise.resolve(run(swapTokenValue(fromCurrency, toCurrency, isInsurance))).then(function (res) {
+      console.log('GetTokenValue result==', res);
+      return res;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 
 /**
  * @description: generate  pair address by tokenA and tokenB
@@ -7012,20 +6989,6 @@ function _catch(body, recover) {
  * @return { Pair }
  */
 
-
-function _finallyRethrows(body, finalizer) {
-  try {
-    var result = body();
-  } catch (e) {
-    return finalizer(true, e);
-  }
-
-  if (result && result.then) {
-    return result.then(finalizer.bind(null, false), finalizer.bind(null, true));
-  }
-
-  return finalizer(false, result);
-}
 
 function getAddress(tokenA, tokenB, factoryAddreaa, initCodeHash) {
   var _PAIR_ADDRESS_CACHE, _PAIR_ADDRESS_CACHE$t;
@@ -7083,305 +7046,265 @@ var fetchPairData = function fetchPairData(tokenA, tokenB, factoryAddress, initC
  * }
  */
 
-function useMidPrice() {
-  var _useState = react.useState(false),
-      loading = _useState[0],
-      setLoading = _useState[1];
+var state$1 = {
+  impactPrice: 0.0,
+  ethRes: 0.0,
+  czzRes: 0.0,
+  midPrice: 0.0,
+  midProce2: 0.0,
+  priceStatus: 0,
+  priceEffect: '',
+  price: '',
+  resStatus: []
+};
+/**
+ * @description: 
+ * @param { CurrencyProps } lp          : swap token info must be from or to token
+ * @param { string[] } routerList       : the best path token address array
+ * @return { number }                   : swap rate
+ */
 
-  var _useState2 = react.useState(0),
-      impactPrice = _useState2[0],
-      setImpactPrice = _useState2[1];
+var fetchPair = function fetchPair(lp, routerList) {
+  try {
+    var networkId = lp.networkId,
+        currency = lp.currency,
+        czz = lp.czz,
+        provider = lp.provider,
+        networkName = lp.networkName,
+        weth = lp.weth;
+    var _lp$swap$lp$route = lp.swap[lp.route],
+        factoryAddress = _lp$swap$lp$route.factoryAddress,
+        currentToken = _lp$swap$lp$route.currentToken,
+        initCodeHash = _lp$swap$lp$route.initCodeHash;
+    var newWethToken = weth; // debugger
 
-  var _useState3 = react.useState({
-    ethRes: 0.0,
-    czzRes: 0.0,
-    midPrice: 0.0,
-    midProce2: 0.0,
-    priceStatus: 0,
-    priceEffect: '',
-    price: '',
-    resStatus: []
-  }),
-      resultState = _useState3[0],
-      setResultState = _useState3[1];
-  /**
-   * @description: 
-   * @param { CurrencyProps } lp          : swap token info must be from or to token
-   * @param { string[] } routerList       : the best path token address array
-   * @return { number }                   : swap rate
-   */
+    var isDirectSwap = false;
 
-
-  var fetchPair = function fetchPair(lp, routerList) {
-    try {
-      var networkId = lp.networkId,
-          currency = lp.currency,
-          czz = lp.czz,
-          provider = lp.provider,
-          networkName = lp.networkName,
-          weth = lp.weth;
-      var _lp$swap$lp$route = lp.swap[lp.route],
-          factoryAddress = _lp$swap$lp$route.factoryAddress,
-          currentToken = _lp$swap$lp$route.currentToken,
-          initCodeHash = _lp$swap$lp$route.initCodeHash;
-      var newWethToken = weth; // debugger
-
-      var isDirectSwap = false;
-
-      if (routerList && routerList.length === 2) {
-        newWethToken = czz;
-        isDirectSwap = true;
-      }
-
-      if (routerList && routerList.length === 3) {
-        newWethToken = routerList[1];
-        isDirectSwap = false;
-      }
-
-      var From = new sdk.Token(Number(networkId), currency.tokenAddress ? currency.tokenAddress : currentToken, currency.tokenAddress ? currency.decimals : 18);
-      var Eczz = new sdk.Token(Number(networkId), czz, 8);
-      var WETH = new sdk.Token(Number(networkId), newWethToken, 18);
-      return Promise.resolve(_catch(function () {
-        function _temp2() {
-          var from_weth = route0.midPrice.toSignificant(6);
-          var eczz_weth = isDirectSwap ? 1 : route1.midPrice.toSignificant(6);
-          return eczz_weth / from_weth;
-        }
-
-        var FromPair, route0, ToPair, route1;
-
-        var _temp = function () {
-          if (isDirectSwap) {
-            return Promise.resolve(fetchPairData(Eczz, From, factoryAddress, initCodeHash, provider)).then(function (_fetchPairData) {
-              FromPair = _fetchPairData;
-              route0 = new sdk.Route([FromPair], Eczz);
-            });
-          } else {
-            return Promise.resolve(fetchPairData(WETH, From, factoryAddress, initCodeHash, provider)).then(function (_fetchPairData2) {
-              FromPair = _fetchPairData2;
-              route0 = new sdk.Route([FromPair], WETH);
-              return Promise.resolve(fetchPairData(WETH, Eczz, factoryAddress, initCodeHash, provider)).then(function (_fetchPairData3) {
-                ToPair = _fetchPairData3;
-                route1 = new sdk.Route([ToPair], WETH);
-              });
-            });
-          }
-        }();
-
-        return _temp && _temp.then ? _temp.then(_temp2) : _temp2(_temp);
-      }, function (error) {
-        throw new Error(error);
-      }));
-    } catch (e) {
-      return Promise.reject(e);
+    if (routerList && routerList.length === 2) {
+      newWethToken = czz;
+      isDirectSwap = true;
     }
-  };
-  /**
-   * @description: main method 
-   */
 
+    if (routerList && routerList.length === 3) {
+      newWethToken = routerList[1];
+      isDirectSwap = false;
+    }
 
-  var fetchPrice = react.useCallback(function (fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
-    try {
-      var fromNetwork = networks.filter(function (i) {
-        return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
-      });
-      var toNetwork = networks.filter(function (i) {
-        return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
-      });
+    var From = new sdk.Token(Number(networkId), currency.tokenAddress ? currency.tokenAddress : currentToken, currency.tokenAddress ? currency.decimals : 18);
+    var Eczz = new sdk.Token(Number(networkId), czz, 8);
+    var WETH = new sdk.Token(Number(networkId), newWethToken, 18);
+    return Promise.resolve(_catch(function () {
+      function _temp2() {
+        var from_weth = route0.midPrice.toSignificant(6);
+        var eczz_weth = isDirectSwap ? 1 : route1.midPrice.toSignificant(6);
+        return eczz_weth / from_weth;
+      }
 
-      var from = _extends({}, fromNetwork[0], {
-        currency: fromCurrency,
-        tokenValue: fromCurrency.tokenValue,
-        route: fromCurrency.route
-      });
+      var FromPair, route0, ToPair, route1;
 
-      var to = _extends({}, toNetwork[0], {
-        currency: toCurrency,
-        tokenValue: toCurrency.tokenValue,
-        route: toCurrency.route
-      });
-
-      var resultStage = [];
-      resultStage = ['initial'];
-      return Promise.resolve(function () {
-        if (from.tokenValue && Number(swapFee) > 0) {
-          return _finallyRethrows(function () {
-            return _catch(function () {
-              function _temp6() {
-                function _temp4() {
-                  var midPrice = ethRes / czzRes;
-                  var midProce2 = Number(Number(Number(from.tokenValue) * midPrice).toFixed(to.currency.decimals));
-                  var price = Number((midProce2 - Number(to.tokenValue) - Number(swapFee)) / midProce2 * 100).toFixed(2);
-                  resultStage = [].concat(resultStage, ['end']);
-                  setImpactPrice(price);
-                  var priceEffect = changePriceStatus(price);
-                  setResultState(_extends({}, resultState, {
-                    ethRes: ethRes,
-                    czzRes: czzRes,
-                    midPrice: midPrice,
-                    midProce2: midProce2,
-                    price: price,
-                    priceStatus: priceEffect.priceStatus,
-                    priceEffect: priceEffect.priceEffect,
-                    resStatus: [].concat(resultStage)
-                  }));
-                  setLoading(false);
-                  console.log('fetchPrice1', resultState);
-                }
-
-                var czzRes = 1;
-
-                var _temp3 = function () {
-                  if (to.currency.tokenAddress !== to.czz) {
-                    resultStage = [].concat(resultStage, ['czzRes']);
-                    return Promise.resolve(fetchPair(to, bestToArr)).then(function (_fetchPair2) {
-                      czzRes = _fetchPair2;
-                    });
-                  }
-                }();
-
-                return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
-              }
-
-              setLoading(true);
-              resultStage = [].concat(resultStage, ['loading', 'FINDING_PRICE_ING']); // debugger
-
-              var ethRes = 1;
-
-              var _temp5 = function () {
-                if (from.currency.tokenAddress !== from.czz) {
-                  resultStage = [].concat(resultStage, ['ethRes']);
-                  return Promise.resolve(fetchPair(from, bestFromArr)).then(function (_fetchPair) {
-                    ethRes = _fetchPair;
-                  });
-                }
-              }();
-
-              return _temp5 && _temp5.then ? _temp5.then(_temp6) : _temp6(_temp5);
-            }, function (error) {
-              setLoading(false);
-              resultStage = [].concat(resultStage, ['NONE_TRADE']);
-              setResultState(_extends({}, resultState, {
-                resStatus: [].concat(resultStage)
-              }));
-              setImpactPrice(0);
-              console.log('fetchPrice2', resultState);
-              throw error;
+      var _temp = function () {
+        if (isDirectSwap) {
+          return Promise.resolve(fetchPairData(Eczz, From, factoryAddress, initCodeHash, provider)).then(function (_fetchPairData) {
+            FromPair = _fetchPairData;
+            route0 = new sdk.Route([FromPair], Eczz);
+          });
+        } else {
+          return Promise.resolve(fetchPairData(WETH, From, factoryAddress, initCodeHash, provider)).then(function (_fetchPairData2) {
+            FromPair = _fetchPairData2;
+            route0 = new sdk.Route([FromPair], WETH);
+            return Promise.resolve(fetchPairData(WETH, Eczz, factoryAddress, initCodeHash, provider)).then(function (_fetchPairData3) {
+              ToPair = _fetchPairData3;
+              route1 = new sdk.Route([ToPair], WETH);
             });
-          }, function (_wasThrown, _result2) {
-            setLoading(false);
-            if (_wasThrown) throw _result2;
-            return _result2;
           });
         }
-      }());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }, []);
-  /**
-   * @description: change price status 
-   * @param { price : number } 
-   * @return {  
-   *       priceStatus: number,   3|2|1|0
-   *       priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
-   * }
-   */
+      }();
 
-  var changePriceStatus = function changePriceStatus(val) {
-    var price = Number(val);
-
-    if (price > 15) {
-      return {
-        priceStatus: 3,
-        priceEffect: 'SWAP_IMPACT_HIGH'
-      };
-    } else if (price > 5 && price < 15) {
-      return {
-        priceStatus: 2,
-        priceEffect: 'SWAP_IMPACT_WARN'
-      };
-    } else if (price > 3 && price < 5) {
-      return {
-        priceStatus: 1,
-        priceEffect: 'SWAP_IMPACT_WARN'
-      };
-    } else if (price < 3) {
-      return {
-        priceStatus: 0,
-        priceEffect: 'SWAP'
-      };
-    }
-  }; // useEffect(() => {
-  //   if (to.currency && to.tokenValue) {
-  //     fetchPrice()
-  //   }
-  // }, [to.tokenValue])
+      return _temp && _temp.then ? _temp.then(_temp2) : _temp2(_temp);
+    }, function (error) {
+      throw new Error(error);
+    }));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+/**
+ * @description: main method 
+ */
 
 
-  return {
-    loading: loading,
-    impactPrice: impactPrice,
-    resultState: resultState,
-    fetchPrice: fetchPrice
-  };
-}
+var fetchPrice = function fetchPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
+  try {
+    var fromNetwork = networks.filter(function (i) {
+      return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
+    });
+    var toNetwork = networks.filter(function (i) {
+      return i.networkType === (toCurrency == null ? void 0 : toCurrency.systemType);
+    });
+
+    var from = _extends({}, fromNetwork[0], {
+      currency: fromCurrency,
+      tokenValue: fromCurrency.tokenValue,
+      route: fromCurrency.route
+    });
+
+    var to = _extends({}, toNetwork[0], {
+      currency: toCurrency,
+      tokenValue: toCurrency.tokenValue,
+      route: toCurrency.route
+    });
+
+    var resultStage = [];
+    resultStage = ['initial'];
+    return Promise.resolve(function () {
+      if (from.tokenValue && Number(swapFee) > 0) {
+        var _temp8 = _catch(function () {
+          function _temp6() {
+            function _temp4() {
+              var midPrice = ethRes / czzRes;
+              var midProce2 = Number(Number(Number(from.tokenValue) * midPrice).toFixed(to.currency.decimals));
+              var price = Number((midProce2 - Number(to.tokenValue) - Number(swapFee)) / midProce2 * 100).toFixed(2);
+              resultStage = [].concat(resultStage, ['end']); // setImpactPrice(price)
+
+              var priceEffect = changePriceStatus(price);
+              state$1.ethRes = ethRes;
+              state$1.czzRes = czzRes;
+              state$1.midPrice = midPrice;
+              state$1.midProce2 = midProce2;
+              state$1.price = price;
+              state$1.priceStatus = priceEffect.priceStatus;
+              state$1.priceEffect = priceEffect.priceEffect;
+              state$1.resStatus = [].concat(resultStage);
+              state$1.impactPrice = price;
+            }
+
+            var czzRes = 1;
+
+            var _temp3 = function () {
+              if (to.currency.tokenAddress !== to.czz) {
+                resultStage = [].concat(resultStage, ['czzRes']);
+                return Promise.resolve(fetchPair(to, bestToArr)).then(function (_fetchPair2) {
+                  czzRes = _fetchPair2;
+                });
+              }
+            }();
+
+            return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
+          }
+
+          resultStage = [].concat(resultStage, ['loading', 'FINDING_PRICE_ING']); // debugger
+
+          var ethRes = 1;
+
+          var _temp5 = function () {
+            if (from.currency.tokenAddress !== from.czz) {
+              resultStage = [].concat(resultStage, ['ethRes']);
+              return Promise.resolve(fetchPair(from, bestFromArr)).then(function (_fetchPair) {
+                ethRes = _fetchPair;
+              });
+            }
+          }();
+
+          return _temp5 && _temp5.then ? _temp5.then(_temp6) : _temp6(_temp5);
+        }, function (error) {
+          resultStage = [].concat(resultStage, ['NONE_TRADE']);
+          state$1.resStatus = [].concat(resultStage);
+          state$1.impactPrice = 0;
+          console.log('error :', error);
+        });
+
+        return _temp8 && _temp8.then ? _temp8.then(function () {
+          return state$1;
+        }) : state$1;
+      }
+    }());
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+/**
+ * @description: change price status 
+ * @param { price : number } 
+ * @return {  
+ *       priceStatus: number,   3|2|1|0
+ *       priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
+ * }
+ */
+
+
+var changePriceStatus = function changePriceStatus(val) {
+  var price = Number(val);
+
+  if (price > 15) {
+    return {
+      priceStatus: 3,
+      priceEffect: 'SWAP_IMPACT_HIGH'
+    };
+  } else if (price > 5 && price < 15) {
+    return {
+      priceStatus: 2,
+      priceEffect: 'SWAP_IMPACT_WARN'
+    };
+  } else if (price > 3 && price < 5) {
+    return {
+      priceStatus: 1,
+      priceEffect: 'SWAP_IMPACT_WARN'
+    };
+  } else if (price < 3) {
+    return {
+      priceStatus: 0,
+      priceEffect: 'SWAP'
+    };
+  }
+}; // return { loading, impactPrice, resultState, fetchPrice }
+
+
+var getMidPrice = function getMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
+  try {
+    var _czzAsync = czzAsync(),
+        run = _czzAsync.run;
+
+    return Promise.resolve(run(fetchPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee))).then(function (res) {
+      console.log('getMidPrice result==', res);
+      return res;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 
 var numberToHex = Web3__default['default'].utils.numberToHex;
-window.web3 = Web3__default['default'];
-window.BigNumber = BigNumber__default['default'];
 /**
  * @description: swap from one token to another
  */
 
-function useSwapAndBurn() {
-  var _useState = react.useState(null),
-      receipt = _useState[0],
-      setReceipt = _useState[1];
-
-  var _useState2 = react.useState(null),
-      hash = _useState2[0],
-      setHash = _useState2[1];
-
-  var _useState3 = react.useState(false),
-      loading = _useState3[0],
-      setLoading = _useState3[1];
-
-  var _useState4 = react.useState([]),
-      pending = _useState4[0],
-      setPending = _useState4[1];
-
-  var stopPending = function stopPending(id) {
-    setLoading(false);
-    setPending(pending.filter(function (i) {
-      return i.id !== id;
-    }));
-  }; // reset swap token loop
+var state = {
+  receipt: null,
+  hash: null
+}; // reset swap token loop
 
 
-  var swapSuccess = function swapSuccess(from, to, receipt) {
-    successMessage(from, to, receipt); // debugger
-    // resSwap()
-  };
-  /**
-   * @description: swap main
-   * @param { CurrencyProps } fromCurrency      : swap from token info
-   * @param { CurrencyProps } toCurrency        : swap to token info
-   * @param { Web3.providers.HttpProvider } provider  : Web3.providers.HttpProvider
-   * @param { string } accounts                 : user account info
-   * @param { SwapSettingProps } swapSetting    : swap setting
-   * @param { number } changeAmount             : swap changeAmount
-   * @param { string[] } bestFromArr            : swap from token address array
-   * @param {boolean } isInsurance          : is use insurance
-   * 
-   */
+var swapSuccess = function swapSuccess(from, to, receipt) {
+  successMessage(from, to, receipt); // debugger
+  // resSwap()
+};
+/**
+ * @description: swap main
+ * @param { CurrencyProps } fromCurrency      : swap from token info
+ * @param { CurrencyProps } toCurrency        : swap to token info
+ * @param { Web3.providers.HttpProvider } provider  : Web3.providers.HttpProvider
+ * @param { string } accounts                 : user account info
+ * @param { SwapSettingProps } swapSetting    : swap setting
+ * @param { number } changeAmount             : swap changeAmount
+ * @param { string[] } bestFromArr            : swap from token address array
+ * @param {boolean } isInsurance          : is use insurance
+ * 
+ */
 
 
-  var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) {
+var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) {
+  return new Promise(function (resolve, reject) {
     var _from$currency, _from$currency2, _to$currency;
-
-    setLoading(true); // setButtonText('SWAP_ING')
 
     var fromNetwork = networks.filter(function (i) {
       return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
@@ -7445,25 +7368,21 @@ function useSwapAndBurn() {
         hash: hashRes
       }, getHashUrl(hashRes), {
         id: swapTime
-      }); // setRecent([swapResresult, ...recent])
+      });
 
-
-      setHash(swapResresult);
-      setPending([].concat(pending, [swapResresult]));
+      state.hash = swapResresult; // return Promise.resolve(state)
     };
 
-    var swapReceipt = function swapReceipt(receipt, id) {
+    var swapReceipt = function swapReceipt(receipt) {
       console.log('Swap receipt Result ===> ', receipt);
-      setReceipt(receipt);
+      state.receipt = receipt;
       swapSuccess(from, to, receipt);
-      stopPending(swapTime);
+      resolve(state);
     };
 
     var swapError = function swapError(error) {
-      setLoading(false);
-      stopPending(swapTime); // setButtonText('SWAP')
-
       console.log('Swap Error ===>', error);
+      reject(error);
     };
 
     var lpSwap = function lpSwap(swaprouter, toaddress) {
@@ -7523,24 +7442,30 @@ function useSwapAndBurn() {
     } else {
       czzSwap(toaddress);
     }
-  };
+  });
+};
 
-  var successMessage = function successMessage(from, to, res) {
-    //todo callback function
-    console.log("successMessage : Swap " + (from == null ? void 0 : from.currency.symbol) + " to " + (to == null ? void 0 : to.currency.symbol) + "  process url  " + (from == null ? void 0 : from.explorerUrl) + "tx/" + res.transactionHash);
-  };
+var successMessage = function successMessage(from, to, res) {
+  //todo callback function
+  console.log("successMessage : Swap " + (from == null ? void 0 : from.currency.symbol) + " to " + (to == null ? void 0 : to.currency.symbol) + "  process url  " + (from == null ? void 0 : from.explorerUrl) + "tx/" + res.transactionHash);
+};
 
-  return {
-    loading: loading,
-    receipt: receipt,
-    hash: hash,
-    fetchSwap: fetchSwap,
-    setHash: setHash
-  };
-}
+var swapAndBurn = function swapAndBurn(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) {
+  try {
+    var _czzAsync = czzAsync(),
+        run = _czzAsync.run;
+
+    return Promise.resolve(run(fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance))).then(function (res) {
+      console.log('SwapAndBurn result==', res);
+      return res;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 
 exports.allowanceAction = allowanceAction;
-exports.useApproveActions = useApproveActions;
-exports.useGetTokenValue = useGetTokenValue;
-exports.useMidPrice = useMidPrice;
-exports.useSwapAndBurn = useSwapAndBurn;
+exports.approveActions = approveActions;
+exports.getMidPrice = getMidPrice;
+exports.getTokenValue = getTokenValue;
+exports.swapAndBurn = swapAndBurn;
