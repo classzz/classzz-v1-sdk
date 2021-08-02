@@ -16,43 +16,67 @@ export interface ResultProps {
     miniReceived: number;
     resStatus: string[];
 }
-
-export declare const useApproveActions: () => {
-    authorization: boolean;
-    isApprove: boolean;
-    approveLoading: boolean;
-    approveAction: (fromCurrency: CurrencyProps, currentProvider: provider, accounts: string) => Promise<void>;
-};
-export declare const allowanceAction: (fromCurrency: CurrencyProps, currentProvider: provider, accounts: string) => Promise<boolean>;
-export declare function useGetTokenValue(): {
-    loading: boolean;
-    resultState: ResultProps;
+export interface CzzState<D> {
+    error: Error | null;
+    data: D | null;
+    stat: "idle" | "loading" | "error" | "success";
+}
+export interface CzzResult<D> {
+    isIdle: boolean;
+    isLoading: boolean;
+    isError: boolean;
+    isSuccess: boolean;
+    error: Error | null;
+    data: D | null;
+    stat: "idle" | "loading" | "error" | "success";
+}
+export interface ResultGetTokenValue {
+    isToCzz: boolean;
     routerFrom: string[];
     routerTo: string[];
     insuranceStatus: boolean;
     bestFromArr: string[];
     bestToArr: string[];
-    isToCzz: boolean;
-    swapTokenValue: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, isInsurance: boolean) => Promise<false | undefined>;
-};
-
-export declare function getAddress(tokenA: Token, tokenB: Token, factoryAddreaa: string, initCodeHash: string): string;
-export declare const fetchPairData: (tokenA: Token, tokenB: Token, factoryAddress: string, initCodeHash: string, provider: provider) => Promise<void>;
-export declare function useMidPrice(): {
-    loading: boolean;
+    priceStatus: number;
+    swapFee: number;
+    fromTokenValue: string;
+    changeAmount: number;
+    miniReceived: number;
+    resStatus: string[];
+}
+export interface ResultGetMidPrice {
     impactPrice: number;
-    resultState: ResultProps;
-    fetchPrice: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, bestFromArr: string[], bestToArr: string[], swapFee: string) => Promise<void>;
-};
+    ethRes: number;
+    czzRes: number;
+    midPrice: number;
+    midProce2: number;
+    priceStatus: number;
+    priceEffect: string;
+    price: string;
+    resStatus: string[];
+}
+export interface ResultSwapAndBurn<T> {
+    receipt: T | null;
+    hash: T | null;
+}
+interface InsuranceNetwork {
+    rpcURL: string;
+    tokenAddress: string;
+    securityPollAddress: string;
+    provider: provider;
+}
 interface SwapSettingProps {
     tolerance: number;
     deadline: number;
 }
+declare const insuranceNetwork: { [key: string]: InsuranceNetwork; };
+export declare const czzAsync: <D>() => { run: (promise: Promise<D>) => Promise<CzzResult<D>>; };
+export declare const approveActions: (fromCurrency: CurrencyProps, currentProvider: provider, accounts: string) => Promise<CzzResult<unknown>>;
+export declare const allowanceAction: (fromCurrency: CurrencyProps, currentProvider: provider, accounts: string) => Promise<CzzResult<unknown>>;
+export declare const getTokenValue: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, isInsurance: boolean) => Promise<CzzResult<ResultGetTokenValue | unknown>>;
 
-export declare function useSwapAndBurn(): {
-    loading: boolean;
-    receipt: undefined;
-    hash: undefined;
-    fetchSwap: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, currentProvider: provider, accounts: string, swapSetting: SwapSettingProps, changeAmount: string, bestFromArr: string[], isInsurance: boolean) => void;
-    setHash: import("react").Dispatch<import("react").SetStateAction<undefined>>;
-};
+export declare function getAddress(tokenA: Token, tokenB: Token, factoryAddreaa: string, initCodeHash: string): string;
+export declare const fetchPairData: (tokenA: Token, tokenB: Token, factoryAddress: string, initCodeHash: string, provider: provider) => Promise<void>;
+export declare const getMidPrice: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, bestFromArr: string[], bestToArr: string[], swapFee: string) => Promise<CzzResult<ResultGetMidPrice | unknown>>;
+
+export declare const swapAndBurn: <T>(fromCurrency: CurrencyProps, toCurrency: CurrencyProps, currentProvider: provider, accounts: string, swapSetting: SwapSettingProps, changeAmount: string, bestFromArr: string[], isInsurance: boolean) => Promise<CzzResult<ResultSwapAndBurn<T> | unknown>>;

@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>index | classzz-v1-sdk</title>
+	<title>hooks/swapAndBurn | classzz-v1-sdk</title>
 	<meta name="description" content="Documentation for classzz-v1-sdk">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -55,10 +55,10 @@
 					<a href="../modules.html">classzz-v1-sdk</a>
 				</li>
 				<li>
-					<a href="index.html">index</a>
+					<a href="hooks_swapAndBurn.html">hooks/swapAndBurn</a>
 				</li>
 			</ul>
-			<h1>Module index</h1>
+			<h1>Module hooks/swapAndBurn</h1>
 		</div>
 	</div>
 </header>
@@ -70,44 +70,65 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
-							<h3>References</h3>
+							<h3>Functions</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-reference tsd-parent-kind-module"><a href="index.html#allowanceAction" class="tsd-kind-icon">allowance<wbr>Action</a></li>
-								<li class="tsd-kind-reference tsd-parent-kind-module"><a href="index.html#approveActions" class="tsd-kind-icon">approve<wbr>Actions</a></li>
-								<li class="tsd-kind-reference tsd-parent-kind-module"><a href="index.html#getMidPrice" class="tsd-kind-icon">get<wbr>Mid<wbr>Price</a></li>
-								<li class="tsd-kind-reference tsd-parent-kind-module"><a href="index.html#getTokenValue" class="tsd-kind-icon">get<wbr>Token<wbr>Value</a></li>
-								<li class="tsd-kind-reference tsd-parent-kind-module"><a href="index.html#swapAndBurn" class="tsd-kind-icon">swap<wbr>And<wbr>Burn</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter"><a href="hooks_swapAndBurn.html#swapAndBurn" class="tsd-kind-icon">swap<wbr>And<wbr>Burn</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
-				<h2>References</h2>
-				<section class="tsd-panel tsd-member tsd-kind-reference tsd-parent-kind-module">
-					<a name="allowanceAction" class="tsd-anchor"></a>
-					<h3>allowance<wbr>Action</h3>
-					Re-exports <a href="hooks_getTokenValue.html#allowanceAction">allowanceAction</a>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-reference tsd-parent-kind-module">
-					<a name="approveActions" class="tsd-anchor"></a>
-					<h3>approve<wbr>Actions</h3>
-					Re-exports <a href="hooks_getTokenValue.html#approveActions">approveActions</a>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-reference tsd-parent-kind-module">
-					<a name="getMidPrice" class="tsd-anchor"></a>
-					<h3>get<wbr>Mid<wbr>Price</h3>
-					Re-exports <a href="hooks_midPrice.html#getMidPrice">getMidPrice</a>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-reference tsd-parent-kind-module">
-					<a name="getTokenValue" class="tsd-anchor"></a>
-					<h3>get<wbr>Token<wbr>Value</h3>
-					Re-exports <a href="hooks_getTokenValue.html#getTokenValue">getTokenValue</a>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-reference tsd-parent-kind-module">
+				<h2>Functions</h2>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
 					<a name="swapAndBurn" class="tsd-anchor"></a>
-					<h3>swap<wbr>And<wbr>Burn</h3>
-					Re-exports <a href="hooks_swapAndBurn.html#swapAndBurn">swapAndBurn</a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> swap<wbr>And<wbr>Burn</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<li class="tsd-signature tsd-kind-icon">swap<wbr>And<wbr>Burn&lt;T&gt;<span class="tsd-signature-symbol">(</span>fromCurrency<span class="tsd-signature-symbol">: </span><a href="../interfaces/hooks_hooksType.CurrencyProps.html" class="tsd-signature-type" data-tsd-kind="Interface">CurrencyProps</a>, toCurrency<span class="tsd-signature-symbol">: </span><a href="../interfaces/hooks_hooksType.CurrencyProps.html" class="tsd-signature-type" data-tsd-kind="Interface">CurrencyProps</a>, currentProvider<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">provider</span>, accounts<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, swapSetting<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">SwapSettingProps</span>, changeAmount<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, bestFromArr<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, isInsurance<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/hooks_hooksType.CzzResult.html" class="tsd-signature-type" data-tsd-kind="Interface">CzzResult</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in hooks/swapAndBurn.ts:110</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-type-parameters-title">Type parameters</h4>
+							<ul class="tsd-type-parameters">
+								<li>
+									<h4>T</h4>
+								</li>
+							</ul>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>fromCurrency: <a href="../interfaces/hooks_hooksType.CurrencyProps.html" class="tsd-signature-type" data-tsd-kind="Interface">CurrencyProps</a></h5>
+								</li>
+								<li>
+									<h5>toCurrency: <a href="../interfaces/hooks_hooksType.CurrencyProps.html" class="tsd-signature-type" data-tsd-kind="Interface">CurrencyProps</a></h5>
+								</li>
+								<li>
+									<h5>currentProvider: <span class="tsd-signature-type">provider</span></h5>
+								</li>
+								<li>
+									<h5>accounts: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>swapSetting: <span class="tsd-signature-type">SwapSettingProps</span></h5>
+								</li>
+								<li>
+									<h5>changeAmount: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>bestFromArr: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+								<li>
+									<h5>isInsurance: <span class="tsd-signature-type">boolean</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/hooks_hooksType.CzzResult.html" class="tsd-signature-type" data-tsd-kind="Interface">CzzResult</a><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 		</div>
@@ -132,30 +153,18 @@
 					<li class=" tsd-kind-module">
 						<a href="hooks_midPrice.html">hooks/mid<wbr>Price</a>
 					</li>
-					<li class=" tsd-kind-module">
+					<li class="current tsd-kind-module">
 						<a href="hooks_swapAndBurn.html">hooks/swap<wbr>And<wbr>Burn</a>
 					</li>
-					<li class="current tsd-kind-module">
+					<li class=" tsd-kind-module">
 						<a href="index.html">index</a>
 					</li>
 				</ul>
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-reference tsd-parent-kind-module">
-						<a href="index.html#allowanceAction" class="tsd-kind-icon">allowance<wbr>Action</a>
-					</li>
-					<li class=" tsd-kind-reference tsd-parent-kind-module">
-						<a href="index.html#approveActions" class="tsd-kind-icon">approve<wbr>Actions</a>
-					</li>
-					<li class=" tsd-kind-reference tsd-parent-kind-module">
-						<a href="index.html#getMidPrice" class="tsd-kind-icon">get<wbr>Mid<wbr>Price</a>
-					</li>
-					<li class=" tsd-kind-reference tsd-parent-kind-module">
-						<a href="index.html#getTokenValue" class="tsd-kind-icon">get<wbr>Token<wbr>Value</a>
-					</li>
-					<li class=" tsd-kind-reference tsd-parent-kind-module">
-						<a href="index.html#swapAndBurn" class="tsd-kind-icon">swap<wbr>And<wbr>Burn</a>
+					<li class=" tsd-kind-function tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="hooks_swapAndBurn.html#swapAndBurn" class="tsd-kind-icon">swap<wbr>And<wbr>Burn</a>
 					</li>
 				</ul>
 			</nav>

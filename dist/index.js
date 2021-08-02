@@ -7370,14 +7370,21 @@ var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, ac
         id: swapTime
       });
 
-      state.hash = swapResresult; // return Promise.resolve(state)
+      state.hash = swapResresult;
+
+      if (state.receipt) {
+        resolve(state);
+      }
     };
 
     var swapReceipt = function swapReceipt(receipt) {
       console.log('Swap receipt Result ===> ', receipt);
       state.receipt = receipt;
       swapSuccess(from, to, receipt);
-      resolve(state);
+
+      if (state.hash) {
+        resolve(state);
+      }
     };
 
     var swapError = function swapError(error) {

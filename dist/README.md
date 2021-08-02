@@ -17,8 +17,21 @@ yarn add classzz-v1-sdk
 ```
 ## use 
 
-    import { approveActions, allowanceAction, getTokenValue, getMidPrice ,swapAndBurn} from '../hooks/midPrice'  from 'classzz-v1-sdk'
-    
+   import { approveActions, allowanceAction, getTokenValue, getMidPrice ,swapAndBurn}  from 'classzz-v1-sdk'
+
+    const resGetTokenValue = await getTokenValue(from, to, true)
+
+    const resGetMidPrice = await getMidPrice(from, to, resGetTokenValue.bestFromArr, resGetTokenValue.bestToArr, resGetTokenValue.swapFee)
+
+    const resAllowance = await allowanceAction(from, currentProvider, accounts)
+
+    const resApprove = await approveActions(from, currentProvider, accounts)
+
+    if (resAllowance.data.allow && resGetTokenValue.changeAmount > 0 && resGetTokenValue.swapFee > 0 && resGetTokenValue.miniReceived > 0 && resGetMidPrice.impactPrice > 0) {
+            const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue.changeAmount, resGetTokenValue.bestFromArr, false)
+        }
+
+   
     swap step:
     1、swapTokenValue  
     2、fetchPrice     

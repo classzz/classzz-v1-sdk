@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ResultProps | classzz-v1-sdk</title>
+	<title>ResultSwapAndBurn | classzz-v1-sdk</title>
 	<meta name="description" content="Documentation for classzz-v1-sdk">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -58,21 +58,29 @@
 					<a href="../modules/hooks_hooksType.html">hooks/hooksType</a>
 				</li>
 				<li>
-					<a href="hooks_hooksType.ResultProps.html">ResultProps</a>
+					<a href="hooks_hooksType.ResultSwapAndBurn.html">ResultSwapAndBurn</a>
 				</li>
 			</ul>
-			<h1>Interface ResultProps</h1>
+			<h1>Interface ResultSwapAndBurn&lt;T&gt;</h1>
 		</div>
 	</div>
 </header>
 <div class="container container-main">
 	<div class="row">
 		<div class="col-8 col-content">
+			<section class="tsd-panel tsd-type-parameters">
+				<h3>Type parameters</h3>
+				<ul class="tsd-type-parameters">
+					<li>
+						<h4>T</h4>
+					</li>
+				</ul>
+			</section>
 			<section class="tsd-panel tsd-hierarchy">
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ResultProps</span>
+						<span class="target">ResultSwapAndBurn</span>
 					</li>
 				</ul>
 			</section>
@@ -83,11 +91,8 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hooks_hooksType.ResultProps.html#fromTokenValue" class="tsd-kind-icon">from<wbr>Token<wbr>Value</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hooks_hooksType.ResultProps.html#miniReceived" class="tsd-kind-icon">mini<wbr>Received</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hooks_hooksType.ResultProps.html#priceStatus" class="tsd-kind-icon">price<wbr>Status</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hooks_hooksType.ResultProps.html#resStatus" class="tsd-kind-icon">res<wbr>Status</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hooks_hooksType.ResultProps.html#swapFee" class="tsd-kind-icon">swap<wbr>Fee</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hooks_hooksType.ResultSwapAndBurn.html#hash" class="tsd-kind-icon">hash</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="hooks_hooksType.ResultSwapAndBurn.html#receipt" class="tsd-kind-icon">receipt</a></li>
 							</ul>
 						</section>
 					</div>
@@ -96,52 +101,22 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="fromTokenValue" class="tsd-anchor"></a>
-					<h3>from<wbr>Token<wbr>Value</h3>
-					<div class="tsd-signature tsd-kind-icon">from<wbr>Token<wbr>Value<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<a name="hash" class="tsd-anchor"></a>
+					<h3>hash</h3>
+					<div class="tsd-signature tsd-kind-icon">hash<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">T</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in hooks/hooksType.ts:16</li>
+							<li>Defined in hooks/hooksType.ts:65</li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="miniReceived" class="tsd-anchor"></a>
-					<h3>mini<wbr>Received</h3>
-					<div class="tsd-signature tsd-kind-icon">mini<wbr>Received<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+					<a name="receipt" class="tsd-anchor"></a>
+					<h3>receipt</h3>
+					<div class="tsd-signature tsd-kind-icon">receipt<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">T</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in hooks/hooksType.ts:17</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="priceStatus" class="tsd-anchor"></a>
-					<h3>price<wbr>Status</h3>
-					<div class="tsd-signature tsd-kind-icon">price<wbr>Status<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in hooks/hooksType.ts:14</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="resStatus" class="tsd-anchor"></a>
-					<h3>res<wbr>Status</h3>
-					<div class="tsd-signature tsd-kind-icon">res<wbr>Status<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in hooks/hooksType.ts:18</li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="swapFee" class="tsd-anchor"></a>
-					<h3>swap<wbr>Fee</h3>
-					<div class="tsd-signature tsd-kind-icon">swap<wbr>Fee<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in hooks/hooksType.ts:15</li>
+							<li>Defined in hooks/hooksType.ts:64</li>
 						</ul>
 					</aside>
 				</section>
@@ -193,33 +168,24 @@
 					<li class=" tsd-kind-interface tsd-parent-kind-module">
 						<a href="hooks_hooksType.ResultGetTokenValue.html" class="tsd-kind-icon">Result<wbr>Get<wbr>Token<wbr>Value</a>
 					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-module">
+						<a href="hooks_hooksType.ResultProps.html" class="tsd-kind-icon">Result<wbr>Props</a>
+					</li>
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-module">
-						<a href="hooks_hooksType.ResultProps.html" class="tsd-kind-icon">Result<wbr>Props</a>
+					<li class="current tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
+						<a href="hooks_hooksType.ResultSwapAndBurn.html" class="tsd-kind-icon">Result<wbr>Swap<wbr>And<wbr>Burn</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="hooks_hooksType.ResultProps.html#fromTokenValue" class="tsd-kind-icon">from<wbr>Token<wbr>Value</a>
+								<a href="hooks_hooksType.ResultSwapAndBurn.html#hash" class="tsd-kind-icon">hash</a>
 							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="hooks_hooksType.ResultProps.html#miniReceived" class="tsd-kind-icon">mini<wbr>Received</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="hooks_hooksType.ResultProps.html#priceStatus" class="tsd-kind-icon">price<wbr>Status</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="hooks_hooksType.ResultProps.html#resStatus" class="tsd-kind-icon">res<wbr>Status</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="hooks_hooksType.ResultProps.html#swapFee" class="tsd-kind-icon">swap<wbr>Fee</a>
+								<a href="hooks_hooksType.ResultSwapAndBurn.html#receipt" class="tsd-kind-icon">receipt</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-module tsd-has-type-parameter">
-						<a href="hooks_hooksType.ResultSwapAndBurn.html" class="tsd-kind-icon">Result<wbr>Swap<wbr>And<wbr>Burn</a>
-					</li>
 				</ul>
 			</nav>
 		</div>
