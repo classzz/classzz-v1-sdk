@@ -39,7 +39,7 @@ const swapSuccess = (from, to, receipt) => {
  * @param {boolean } isInsurance          : is use insurance
  * 
  */
-const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) => {
+const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSetting, resGetTokenValue, isInsurance) => {
   return new Promise(function (resolve, reject) {
     const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
     const toNetwork = networks.filter(i => i.networkType === toCurrency?.systemType)
@@ -54,7 +54,7 @@ const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSett
 
     const amountIn = decToBn(Number(from?.tokenValue), from.currency?.decimals)
     // debugger
-    const tolerancAmount = changeAmount ? Web3.utils.numberToHex(changeAmount.multipliedBy(100 - 3).dividedBy(100).integerValue(BigNumber.ROUND_DOWN)) : 0
+    const tolerancAmount = resGetTokenValue.changeAmount ? Web3.utils.numberToHex(resGetTokenValue.changeAmount.multipliedBy(100 - 3).dividedBy(100).integerValue(BigNumber.ROUND_DOWN)) : 0
     // history params
     console.log(`swapSetting  ->  tolerance : ${tolerance} , deadline : ${deadline}`);
     const swapTime = new Date().getTime()
@@ -106,8 +106,8 @@ const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSett
 
     const lpSwap = (swaprouter, toaddress) => {
       let path = []
-      if (bestFromArr?.length > 0) {
-        path = [...bestFromArr]
+      if (resGetTokenValue.bestFromArr?.length > 0) {
+        path = [...resGetTokenValue.bestFromArr]
       }
       lpContract.methods.swapAndBurnWithPath(
         numberToHex(new BigNumber(amountIn)),
@@ -139,8 +139,8 @@ const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSett
     const ethSwap = (swaprouter, toaddress) => {
 
       let path = []
-      if (bestFromArr?.length > 0) {
-        path = [...bestFromArr]
+      if (resGetTokenValue.bestFromArr?.length > 0) {
+        path = [...resGetTokenValue.bestFromArr]
       }
       lpContract.methods.swapAndBurnEthWithPath(
         tolerancAmount, // tolerancAmount, // 0
@@ -167,7 +167,11 @@ const fetchSwap = (fromCurrency, toCurrency, currentProvider, accounts, swapSett
       toaddress = toaddress + '#true'
     }
     if (from.currency.tokenAddress !== from.czz) {
-      from.currency.tokenAddress ? lpSwap(swaprouter, toaddress) : ethSwap(swaprouter, toaddress)
+      if (from.currency.tokenAddress == from.swap[from.route].currentToken || from.currency.tokenAddress == from.router) {
+        ethSwap(swaprouter, toaddress)
+      } else {
+        from.currency.tokenAddress ? lpSwap(swaprouter, toaddress) : ethSwap(swaprouter, toaddress)
+      }
     } else {
       czzSwap(toaddress)
     }
@@ -180,9 +184,9 @@ const successMessage = (from, to, res) => {
   console.log(`successMessage : Swap ${from?.currency.symbol} to ${to?.currency.symbol}  process url  ${from?.explorerUrl}tx/${res.transactionHash}`);
 }
 
-export const swapAndBurn = async (fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) => {
+export const swapAndBurn = async (fromCurrency, toCurrency, currentProvider, accounts, swapSetting, resGetTokenValue, isInsurance) => {
   const { run } = czzAsync()
-  const res = await run(fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance))
+  const res = await run(fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, resGetTokenValue, isInsurance))
   console.log('SwapAndBurn result==', res);
   return res
 }

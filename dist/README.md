@@ -21,14 +21,14 @@ yarn add classzz-v1-sdk
 
     const resGetTokenValue = await getTokenValue(from, to, true)
 
-    const resGetMidPrice = await getMidPrice(from, to, resGetTokenValue.bestFromArr, resGetTokenValue.bestToArr, resGetTokenValue.swapFee)
+    const resGetMidPrice = await getMidPrice(from, to, resGetTokenValue)
 
     const resAllowance = await allowanceAction(from, currentProvider, accounts)
 
     const resApprove = await approveActions(from, currentProvider, accounts)
 
     if (resAllowance.data.allow && resGetTokenValue.changeAmount > 0 && resGetTokenValue.swapFee > 0 && resGetTokenValue.miniReceived > 0 && resGetMidPrice.impactPrice > 0) {
-            const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue.changeAmount, resGetTokenValue.bestFromArr, false)
+            const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue, false)
         }
 
    
@@ -36,7 +36,7 @@ yarn add classzz-v1-sdk
     1、swapTokenValue  
     2、fetchPrice     
     3、check account  if  true  continue else end
-    4、approveAction  if true  continue  else must call 5、approveAction 
+    4、allowanceAction  if true  continue  else must call 5、approveAction 
     5、approveAction  if  true  continue  else end
     6、fetchSwap
 

@@ -77,6 +77,6 @@ export declare const getTokenValue: (fromCurrency: CurrencyProps, toCurrency: Cu
 
 export declare function getAddress(tokenA: Token, tokenB: Token, factoryAddreaa: string, initCodeHash: string): string;
 export declare const fetchPairData: (tokenA: Token, tokenB: Token, factoryAddress: string, initCodeHash: string, provider: provider) => Promise<void>;
-export declare const getMidPrice: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, bestFromArr: string[], bestToArr: string[], swapFee: string) => Promise<CzzResult<ResultGetMidPrice | unknown>>;
+export declare const getMidPrice: (fromCurrency: CurrencyProps, toCurrency: CurrencyProps, resGetTokenTokenValue: ResultGetTokenValue) => Promise<CzzResult<ResultGetMidPrice | unknown>>;
 
-export declare const swapAndBurn: <T>(fromCurrency: CurrencyProps, toCurrency: CurrencyProps, currentProvider: provider, accounts: string, swapSetting: SwapSettingProps, changeAmount: string, bestFromArr: string[], isInsurance: boolean) => Promise<CzzResult<ResultSwapAndBurn<T> | unknown>>;
+export declare const swapAndBurn: <T>(fromCurrency: CurrencyProps, toCurrency: CurrencyProps, currentProvider: provider, accounts: string, swapSetting: SwapSettingProps, resGetTokenTokenValue: ResultGetTokenValue, isInsurance: boolean) => Promise<CzzResult<ResultSwapAndBurn<T> | unknown>>;

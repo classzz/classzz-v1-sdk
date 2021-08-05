@@ -142,30 +142,30 @@ const fetchPair = async (lp, routerList) => {
 /**
  * @description: main method 
  */
-const fetchPrice = async (fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) => {
+const fetchPrice = async (fromCurrency, toCurrency, resGetTokenValue) => {
   const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
   const toNetwork = networks.filter(i => i.networkType === toCurrency?.systemType)
   const from = { ...fromNetwork[0], currency: fromCurrency, tokenValue: fromCurrency.tokenValue, route: fromCurrency.route }
-  const to = { ...toNetwork[0], currency: toCurrency, tokenValue: toCurrency.tokenValue, route: toCurrency.route }
+  const to = { ...toNetwork[0], currency: toCurrency, tokenValue: resGetTokenValue.miniReceived, route: toCurrency.route }
   let resultStage = []
   resultStage = ['initial']
-  if (from.tokenValue && Number(swapFee) > 0) {
+  if (from.tokenValue && Number(resGetTokenValue.miniReceived) > 0) {
     try {
       resultStage = [...resultStage, 'loading', 'FINDING_PRICE_ING']
       // debugger
       let ethRes = 1
       if (from.currency.tokenAddress !== from.czz) {
         resultStage = [...resultStage, 'ethRes']
-        ethRes = await fetchPair(from, bestFromArr)
+        ethRes = await fetchPair(from, resGetTokenValue.bestFromArr)
       }
       let czzRes = 1
       if (to.currency.tokenAddress !== to.czz) {
         resultStage = [...resultStage, 'czzRes']
-        czzRes = await fetchPair(to, bestToArr)
+        czzRes = await fetchPair(to, resGetTokenValue.bestToArr)
       }
       const midPrice = ethRes / czzRes
       const midProce2 = Number(Number(Number(from.tokenValue) * midPrice).toFixed(to.currency.decimals))
-      const price = Number(((midProce2 - Number(to.tokenValue) - Number(swapFee)) / midProce2) * 100).toFixed(2)
+      const price = Number(((midProce2 - Number(to.tokenValue) - Number(resGetTokenValue.swapFee)) / midProce2) * 100).toFixed(2)
       resultStage = [...resultStage, 'end']
       // setImpactPrice(price)
       const priceEffect = changePriceStatus(price)
@@ -212,9 +212,9 @@ const changePriceStatus = val => {
 // return { loading, impactPrice, resultState, fetchPrice }
 
 
-export const getMidPrice = async (fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) => {
+export const getMidPrice = async (fromCurrency, toCurrency, resGetTokenValue) => {
   const { run } = czzAsync()
-  const res = await run(fetchPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee))
+  const res = await run(fetchPrice(fromCurrency, toCurrency, resGetTokenValue))
   console.log('getMidPrice result==', res);
   return res
 }

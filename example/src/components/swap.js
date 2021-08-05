@@ -13,6 +13,7 @@ export const Connect = () => {
     const [isCanSwap, setIsCanSwap] = useState(false)
     const [canFetchPrice, SetCanFetchPrice] = useState(false)
     const [isAllowance, setIsAllowance] = useState(false)
+    const [isNeedApprove, setIsNeedApprove] = useState(false)
 
     const [resGetTokenValue, SetResGetTokenValue] = useState({
         isToCzz: false,
@@ -50,14 +51,14 @@ export const Connect = () => {
     const swapSetting = { tolerance: 0.03, deadline: 5 }
 
     const from = {
-        "tokenAddress": "0xa71edc38d189767582c38a3145b5873052c3e47a",
-        "name": "Heco-Peg USDT",
-        "symbol": "USDT",
+        "tokenAddress": "0x5545153ccfca01fbd7dd11c0b23ba694d9509a6f",
+        "name": "HECO",
+        "symbol": "HT",
         "decimals": 18,
         "systemType": "HECO",
-        "image": "https://mdex.com/token-icons/heco/0xa71edc38d189767582c38a3145b5873052c3e47a.png",
+        "image": "https://docs.classzz.com/svg/HECO.svg",
         "route": 0,
-        "tokenValue": "1"
+        "tokenValue": "0.11"
     }
 
     const to = {
@@ -81,7 +82,7 @@ export const Connect = () => {
         if (accounts && resGetTokenValue.bestFromArr.length > 0) {
 
             if (isAllowance) {
-                const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue.changeAmount, resGetTokenValue.bestFromArr, false)
+                const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue, false)
                 if (res.data) {
                     setResSwap(res.data)
                 }
@@ -118,7 +119,7 @@ export const Connect = () => {
     }
 
     const fetchPrice = async (e) => {
-        const res = await getMidPrice(from, to, resGetTokenValue.bestFromArr, resGetTokenValue.bestToArr, resGetTokenValue.swapFee)
+        const res = await getMidPrice(from, to, resGetTokenValue)
         if (res.data) {
             SetResGetMidPrice(res.data)
         }
@@ -166,6 +167,9 @@ export const Connect = () => {
     const allowance = async () => {
         const res = await allowanceAction(from, currentProvider, accounts)
         setIsAllowance(res.data.allow)
+        if (!res.data.allow) {
+            setIsNeedApprove(true)
+        }
         console.log('allowance', res);
     }
 
@@ -257,7 +261,8 @@ export const Connect = () => {
                 <hr />
                 {allowanceCheck}
                 <hr />
-                {isAllowance ? '' : approveCheck}
+
+                {isNeedApprove ? approveCheck : ''}
 
                 <hr />
                 {isAllowance && isCanSwap ? swapCheck : ''}

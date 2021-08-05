@@ -7133,7 +7133,7 @@ var fetchPair = function fetchPair(lp, routerList) {
  */
 
 
-var fetchPrice = function fetchPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
+var fetchPrice = function fetchPrice(fromCurrency, toCurrency, resGetTokenValue) {
   try {
     var fromNetwork = networks.filter(function (i) {
       return i.networkType === (fromCurrency == null ? void 0 : fromCurrency.systemType);
@@ -7150,20 +7150,20 @@ var fetchPrice = function fetchPrice(fromCurrency, toCurrency, bestFromArr, best
 
     var to = _extends({}, toNetwork[0], {
       currency: toCurrency,
-      tokenValue: toCurrency.tokenValue,
+      tokenValue: resGetTokenValue.miniReceived,
       route: toCurrency.route
     });
 
     var resultStage = [];
     resultStage = ['initial'];
     return Promise.resolve(function () {
-      if (from.tokenValue && Number(swapFee) > 0) {
+      if (from.tokenValue && Number(resGetTokenValue.miniReceived) > 0) {
         var _temp8 = _catch(function () {
           function _temp6() {
             function _temp4() {
               var midPrice = ethRes / czzRes;
               var midProce2 = Number(Number(Number(from.tokenValue) * midPrice).toFixed(to.currency.decimals));
-              var price = Number((midProce2 - Number(to.tokenValue) - Number(swapFee)) / midProce2 * 100).toFixed(2);
+              var price = Number((midProce2 - Number(to.tokenValue) - Number(resGetTokenValue.swapFee)) / midProce2 * 100).toFixed(2);
               resultStage = [].concat(resultStage, ['end']); // setImpactPrice(price)
 
               var priceEffect = changePriceStatus(price);
@@ -7183,7 +7183,7 @@ var fetchPrice = function fetchPrice(fromCurrency, toCurrency, bestFromArr, best
             var _temp3 = function () {
               if (to.currency.tokenAddress !== to.czz) {
                 resultStage = [].concat(resultStage, ['czzRes']);
-                return Promise.resolve(fetchPair(to, bestToArr)).then(function (_fetchPair2) {
+                return Promise.resolve(fetchPair(to, resGetTokenValue.bestToArr)).then(function (_fetchPair2) {
                   czzRes = _fetchPair2;
                 });
               }
@@ -7199,7 +7199,7 @@ var fetchPrice = function fetchPrice(fromCurrency, toCurrency, bestFromArr, best
           var _temp5 = function () {
             if (from.currency.tokenAddress !== from.czz) {
               resultStage = [].concat(resultStage, ['ethRes']);
-              return Promise.resolve(fetchPair(from, bestFromArr)).then(function (_fetchPair) {
+              return Promise.resolve(fetchPair(from, resGetTokenValue.bestFromArr)).then(function (_fetchPair) {
                 ethRes = _fetchPair;
               });
             }
@@ -7259,12 +7259,12 @@ var changePriceStatus = function changePriceStatus(val) {
 }; // return { loading, impactPrice, resultState, fetchPrice }
 
 
-var getMidPrice = function getMidPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee) {
+var getMidPrice = function getMidPrice(fromCurrency, toCurrency, resGetTokenValue) {
   try {
     var _czzAsync = czzAsync(),
         run = _czzAsync.run;
 
-    return Promise.resolve(run(fetchPrice(fromCurrency, toCurrency, bestFromArr, bestToArr, swapFee))).then(function (res) {
+    return Promise.resolve(run(fetchPrice(fromCurrency, toCurrency, resGetTokenValue))).then(function (res) {
       console.log('getMidPrice result==', res);
       return res;
     });
@@ -7302,7 +7302,7 @@ var swapSuccess = function swapSuccess(from, to, receipt) {
  */
 
 
-var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) {
+var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, resGetTokenValue, isInsurance) {
   return new Promise(function (resolve, reject) {
     var _from$currency, _from$currency2, _to$currency;
 
@@ -7331,7 +7331,7 @@ var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, ac
     var lpContract = new infoContract.eth.Contract(from.abi, from.router);
     var amountIn = decToBn(Number(from == null ? void 0 : from.tokenValue), (_from$currency = from.currency) == null ? void 0 : _from$currency.decimals); // debugger
 
-    var tolerancAmount = changeAmount ? Web3__default['default'].utils.numberToHex(changeAmount.multipliedBy(100 - 3).dividedBy(100).integerValue(BigNumber__default['default'].ROUND_DOWN)) : 0; // history params
+    var tolerancAmount = resGetTokenValue.changeAmount ? Web3__default['default'].utils.numberToHex(resGetTokenValue.changeAmount.multipliedBy(100 - 3).dividedBy(100).integerValue(BigNumber__default['default'].ROUND_DOWN)) : 0; // history params
 
     console.log("swapSetting  ->  tolerance : " + tolerance + " , deadline : " + deadline);
     var swapTime = new Date().getTime();
@@ -7393,10 +7393,12 @@ var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, ac
     };
 
     var lpSwap = function lpSwap(swaprouter, toaddress) {
+      var _resGetTokenValue$bes;
+
       var path = [];
 
-      if ((bestFromArr == null ? void 0 : bestFromArr.length) > 0) {
-        path = [].concat(bestFromArr);
+      if (((_resGetTokenValue$bes = resGetTokenValue.bestFromArr) == null ? void 0 : _resGetTokenValue$bes.length) > 0) {
+        path = [].concat(resGetTokenValue.bestFromArr);
       }
 
       lpContract.methods.swapAndBurnWithPath(numberToHex(new BigNumber__default['default'](amountIn)), tolerancAmount, // tolerancAmount, // 0
@@ -7414,10 +7416,12 @@ var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, ac
     };
 
     var ethSwap = function ethSwap(swaprouter, toaddress) {
+      var _resGetTokenValue$bes2;
+
       var path = [];
 
-      if ((bestFromArr == null ? void 0 : bestFromArr.length) > 0) {
-        path = [].concat(bestFromArr);
+      if (((_resGetTokenValue$bes2 = resGetTokenValue.bestFromArr) == null ? void 0 : _resGetTokenValue$bes2.length) > 0) {
+        path = [].concat(resGetTokenValue.bestFromArr);
       }
 
       lpContract.methods.swapAndBurnEthWithPath(tolerancAmount, // tolerancAmount, // 0
@@ -7445,7 +7449,11 @@ var fetchSwap = function fetchSwap(fromCurrency, toCurrency, currentProvider, ac
     }
 
     if (from.currency.tokenAddress !== from.czz) {
-      from.currency.tokenAddress ? lpSwap(swaprouter, toaddress) : ethSwap(swaprouter, toaddress);
+      if (from.currency.tokenAddress == from.swap[from.route].currentToken || from.currency.tokenAddress == from.router) {
+        ethSwap(swaprouter, toaddress);
+      } else {
+        from.currency.tokenAddress ? lpSwap(swaprouter, toaddress) : ethSwap(swaprouter, toaddress);
+      }
     } else {
       czzSwap(toaddress);
     }
@@ -7457,12 +7465,12 @@ var successMessage = function successMessage(from, to, res) {
   console.log("successMessage : Swap " + (from == null ? void 0 : from.currency.symbol) + " to " + (to == null ? void 0 : to.currency.symbol) + "  process url  " + (from == null ? void 0 : from.explorerUrl) + "tx/" + res.transactionHash);
 };
 
-var swapAndBurn = function swapAndBurn(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance) {
+var swapAndBurn = function swapAndBurn(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, resGetTokenValue, isInsurance) {
   try {
     var _czzAsync = czzAsync(),
         run = _czzAsync.run;
 
-    return Promise.resolve(run(fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, changeAmount, bestFromArr, isInsurance))).then(function (res) {
+    return Promise.resolve(run(fetchSwap(fromCurrency, toCurrency, currentProvider, accounts, swapSetting, resGetTokenValue, isInsurance))).then(function (res) {
       console.log('SwapAndBurn result==', res);
       return res;
     });
