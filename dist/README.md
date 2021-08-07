@@ -27,18 +27,16 @@ yarn add classzz-v1-sdk
 
     const resApprove = await approveActions(from, currentProvider, accounts)
 
-    if (resAllowance.data.allow && resGetTokenValue.changeAmount > 0 && resGetTokenValue.swapFee > 0 && resGetTokenValue.miniReceived > 0 && resGetMidPrice.impactPrice > 0) {
-            const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue, false)
-        }
+    const resSwap = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue,resGetMidPrice, false)
 
    
     swap step:
-    1、swapTokenValue  
-    2、fetchPrice     
-    3、check account  if  true  continue else end
-    4、allowanceAction  if true  continue  else must call 5、approveAction 
-    5、approveAction  if  true  continue  else end
-    6、fetchSwap
+    1、swapTokenValue  (must)
+    2、fetchPrice     (must)
+    3、check account  (must) if  true  continue else end
+    4、allowanceAction (must) if  true  continue  else must call 5、approveAction 
+    5、approveAction (optional ) if  true  continue  else end
+    6、fetchSwap ( include  call allowanceAction)
 
 ## dependencies
     "@ethersproject/address": "^5.4.0",

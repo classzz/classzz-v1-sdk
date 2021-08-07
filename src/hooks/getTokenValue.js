@@ -27,7 +27,7 @@ const allowanceAsync = async (fromCurrency, currentProvider, accounts) => {
   const amountToken = new BigNumber(decToBn(tokenValue))
   const allonceNum = new BigNumber(decToBn(allowanceTotal))
   console.log('Allowance result==', allonceNum)
-  return { 'allow': allonceNum.comparedTo(amountToken) > 0 }
+  return { 'authorization': allonceNum.comparedTo(amountToken) > 0, 'allowanceTotal': allowanceTotal }
 }
 
 export const allowanceAction = async (fromCurrency, currentProvider, accounts) => {

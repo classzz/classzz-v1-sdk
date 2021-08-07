@@ -82,7 +82,7 @@ export const Connect = () => {
         if (accounts && resGetTokenValue.bestFromArr.length > 0) {
 
             if (isAllowance) {
-                const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue, false)
+                const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue, resGetMidPrice, false)
                 if (res.data) {
                     setResSwap(res.data)
                 }
@@ -94,7 +94,7 @@ export const Connect = () => {
     }
 
     useEffect(() => {
-        if (isAllowance && resGetTokenValue.changeAmount > 0 && resGetTokenValue.swapFee > 0 && resGetTokenValue.miniReceived > 0 && resGetMidPrice.impactPrice > 0) {
+        if (resGetTokenValue.changeAmount > 0 && resGetTokenValue.swapFee > 0 && resGetTokenValue.miniReceived > 0 && resGetMidPrice.impactPrice > 0) {
             setIsCanSwap(true)
         }
     }, [isAllowance, resGetTokenValue, resGetMidPrice, accounts])
@@ -166,8 +166,8 @@ export const Connect = () => {
 
     const allowance = async () => {
         const res = await allowanceAction(from, currentProvider, accounts)
-        setIsAllowance(res.data.allow)
-        if (!res.data.allow) {
+        setIsAllowance(res.data.authorization)
+        if (!res.data.authorization) {
             setIsNeedApprove(true)
         }
         console.log('allowance', res);
@@ -184,6 +184,9 @@ export const Connect = () => {
     const approve = async () => {
         const res = await approveActions(from, currentProvider, accounts)
         if (res) {
+            if (res.data.authorization) {
+                setIsAllowance(true)
+            }
             console.log(res);
 
         }
