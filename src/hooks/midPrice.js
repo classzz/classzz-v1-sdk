@@ -68,18 +68,16 @@ export const fetchPairData = async (tokenA, tokenB, factoryAddress, initCodeHash
  * @param { string[] } bestToArr              : swap to token address array
  * @param { number } swapFee                  : swap fee
  * @return {
- *        loading : boolean, 
- *        impactPrice : number ,  important swap price 
- *        resultState : object   {
-                ethRes: number,
-                czzRes: number,
-                midPrice: number,
-                midProce2: number,
-                priceStatus: number,   3|2|1|0  
-                priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
-                price: string,
-                resStatus: string[]
-              }
+ *        impactPrice : number  important swap price 
+ *        ethRes: number,        eth result
+ *        czzRes: number,        czz result
+ *        midPrice: number,      mid price
+ *        midProce2: number,     mid price2
+ *        priceStatus: number,   3|2|1|0  
+ *        priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
+ *        price: string,         important swap price
+ *        resStatus: string[]    swap mid price status
+
  * }
  */
 
@@ -152,7 +150,6 @@ const fetchPrice = async (fromCurrency, toCurrency, resGetTokenValue) => {
   if (from.tokenValue && Number(resGetTokenValue.miniReceived) > 0) {
     try {
       resultStage = [...resultStage, 'loading', 'FINDING_PRICE_ING']
-      // debugger
       let ethRes = 1
       if (from.currency.tokenAddress !== from.czz) {
         resultStage = [...resultStage, 'ethRes']
@@ -167,7 +164,6 @@ const fetchPrice = async (fromCurrency, toCurrency, resGetTokenValue) => {
       const midProce2 = Number(Number(Number(from.tokenValue) * midPrice).toFixed(to.currency.decimals))
       const price = Number(((midProce2 - Number(to.tokenValue) - Number(resGetTokenValue.swapFee)) / midProce2) * 100).toFixed(2)
       resultStage = [...resultStage, 'end']
-      // setImpactPrice(price)
       const priceEffect = changePriceStatus(price)
       state.ethRes = ethRes
       state.czzRes = czzRes
@@ -208,9 +204,6 @@ const changePriceStatus = val => {
     return { priceStatus: 0, priceEffect: 'SWAP' }
   }
 }
-
-// return { loading, impactPrice, resultState, fetchPrice }
-
 
 export const getMidPrice = async (fromCurrency, toCurrency, resGetTokenValue) => {
   const { run } = czzAsync()

@@ -24,8 +24,6 @@ const resSwap = () => {
 // Swap Success
 const swapSuccess = (from, to, receipt) => {
   successMessage(from, to, receipt)
-  // debugger
-  // resSwap()
 }
 
 /**

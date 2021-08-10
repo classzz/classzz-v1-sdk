@@ -17,10 +17,9 @@ export const czzAsync = () => {
         state.error = error
     }
 
-    // run 用来触发异步请求
     const run = (promise) => {
         if (!promise || !promise.then) {
-            throw new Error("请传入 Promise 类型数据");
+            throw new Error("Must be Promise Type");
         }
         return promise
             .then((data) => {
@@ -34,7 +33,6 @@ export const czzAsync = () => {
                 };
             })
             .catch((error) => {
-                // catch会消化异常，如果不主动抛出，外面是接收不到异常的
                 setError(error);
                 return {
                     isIdle: state.stat === "idle",

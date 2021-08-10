@@ -16,7 +16,7 @@ import { czzAsync } from './czzAsync'
  * @param { CurrencyProps } fromCurrency      : swap from token info
  * @param { currentProvider } currentProvider : current wallet provider 
  * @param { string } accounts                 : user account info
- * @return { boolean }  
+ * @return { 'authorization':boolean, 'allowanceTotal':object }  
  */
 const allowanceAsync = async (fromCurrency, currentProvider, accounts) => {
   const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
@@ -41,12 +41,7 @@ export const allowanceAction = async (fromCurrency, currentProvider, accounts) =
  * @param { CurrencyProps } fromCurrency  swap from token info
  * @param { currentProvider } currentProvider : current wallet provider
  * @param { string } accounts user account info
- * @return { 
- *        approveLoading:boolean, 
- *        authorization:boolean, 
- *        approveResult:object, 
- *        pending:string[] 
- * }
+ * @return { 'authorization': boolean, 'approveResult': object }
  */
 const approveAsync = async (fromCurrency, currentProvider, accounts) => {
 
@@ -55,19 +50,10 @@ const approveAsync = async (fromCurrency, currentProvider, accounts) => {
     const fromNetwork = networks.filter(i => i.networkType === fromCurrency?.systemType)
     const from = { ...fromNetwork[0], tokenValue: fromCurrency.tokenValue, currency: fromCurrency }
     const { router: spender } = from
-    // setApproveLoading(true)
-    // setPending([...pending, 'approve'])
     const res = await approve({ provider: currentProvider, tokenAddress: fromCurrency?.tokenAddress, spender, accounts })
-    // console.log('Approve result ======', res)
-    // setAuthorization(true)
-    // setApproveLoading(false)
-    // setPending(pending.filter(i => i !== 'approve'))
-    // setApproveResult(res)
     authorization = true
     approveResult = res
-    // })
   } catch (error) {
-    // setAuthorization(false)
     authorization = false
     throw error
   }
@@ -88,14 +74,18 @@ export const approveActions = async (fromCurrency, currentProvider, accounts) =>
  * @param { string } accounts             : swap user account info
  * @param {boolean } isInsurance          : is use insurance
  * @return { 
- *        loading             :boolean, 
- *        resultState         :object,  { priceStatus: 0, swapFee: 0, fromTokenValue: "", miniReceived: 0,  resStatus: []}
- *        insuranceStatus     :boolean, 
- *        isToCzz             :boolean, 
+ *        resStatus           :string[], swap status
+ *        insuranceStatus     :boolean,  insuranceStatus
+ *        isToCzz             :boolean,  isToCzz
  *        routerFrom          :string[], swap from token name array
  *        routerTo            :string[], swap to token name array
  *        bestFromArr         :string[], swap from token address array
- *        bestToArr           :string[]  swap to token address array
+ *        bestToArr           :string[], swap to token address array
+ *        priceStatus         :number,   0|1|2|3 
+ *        swapFee:            :number,   swap fee
+ *        fromTokenValue      :string,   swap from token value
+ *        changeAmount        :number,   swap from amount
+ *        miniReceived        :number,   swap to token value
  * }
 
  */
@@ -137,7 +127,6 @@ const changeInsuranceStatus = async (to, amount) => {
     poolInfo.totalAmountDisp = totalAmountBn.dividedBy(tenPowDec).toNumber()
     console.log(poolInfo)
     const status = new BigNumber(poolInfo.totalAmount).comparedTo(new BigNumber(amount)) > 0
-    // setInsuranceStatus(status)
     state.insuranceStatus = status
     return state
   }
@@ -233,7 +222,6 @@ const swapCastingAmount = async (pool = {}, isInsurance, isToCzz, setRouter = fa
     if (networkName === "BSC") {
       gas = gasPrice * 2500000
     }
-    // debugger
     if (networkName === "BSC" && isInsurance && !isToCzz) {
       gas = gasPrice * 500000
     }
