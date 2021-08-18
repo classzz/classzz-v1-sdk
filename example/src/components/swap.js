@@ -15,6 +15,8 @@ export const Connect = () => {
     const [isAllowance, setIsAllowance] = useState(false)
     const [isNeedApprove, setIsNeedApprove] = useState(false)
 
+    const isInsurance = true
+
     const [resGetTokenValue, SetResGetTokenValue] = useState({
         isToCzz: false,
         routerFrom: [],
@@ -82,7 +84,7 @@ export const Connect = () => {
         if (accounts && resGetTokenValue.bestFromArr.length > 0) {
 
             if (isAllowance) {
-                const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue, resGetMidPrice, false)
+                const res = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue, resGetMidPrice, isInsurance)
                 if (res.data) {
                     setResSwap(res.data)
                 }
@@ -112,7 +114,7 @@ export const Connect = () => {
     }, [resSwap])
 
     const swapTokenValue = async (e) => {
-        const res = await getTokenValue(from, to, true)
+        const res = await getTokenValue(from, to, isInsurance)
         if (res.data) {
             SetResGetTokenValue(res.data)
         }

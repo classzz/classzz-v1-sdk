@@ -18,8 +18,9 @@ yarn add classzz-v1-sdk
 ## use 
 
    import { approveActions, allowanceAction, getTokenValue, getMidPrice ,swapAndBurn}  from 'classzz-v1-sdk'
-
-    const resGetTokenValue = await getTokenValue(from, to, true)
+   
+    const isInsurance = true
+    const resGetTokenValue = await getTokenValue(from, to, isInsurance)
 
     const resGetMidPrice = await getMidPrice(from, to, resGetTokenValue)
 
@@ -27,7 +28,7 @@ yarn add classzz-v1-sdk
 
     const resApprove = await approveActions(from, currentProvider, accounts)
 
-    const resSwap = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue,resGetMidPrice, false)
+    const resSwap = await swapAndBurn(from, to, currentProvider, accounts, swapSetting, resGetTokenValue,resGetMidPrice, isInsurance)
 
    
     swap step:

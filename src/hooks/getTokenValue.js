@@ -268,6 +268,9 @@ const swapTokenValue = async (fromCurrency, toCurrency, isInsurance) => {
   resultStage = [...resultStage, 'initial']
   if (from && from?.currency && to?.currency && from?.tokenValue && Number(from?.tokenValue) > 0) {
     try {
+      if (isInsurance && to.currency.tokenAddress == to.czz) {
+        throw 'if to.currency.tokenAddress == to.czz do not use insurance '
+      }
       state.isToCzz = (to?.currency?.symbol ? to?.currency?.symbol.indexOf('CZZ') !== -1 : false)
       resultStage = [...resultStage, 'loading']
       let changeAmount = 0

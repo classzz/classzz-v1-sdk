@@ -6136,12 +6136,11 @@ var czzAsync = function czzAsync() {
     state.data = null;
     state.stat = "error";
     state.error = error;
-  }; // run 用来触发异步请求
-
+  };
 
   var run = function run(promise) {
     if (!promise || !promise.then) {
-      throw new Error("请传入 Promise 类型数据");
+      throw new Error("Must be Promise Type");
     }
 
     return promise.then(function (data) {
@@ -6153,7 +6152,6 @@ var czzAsync = function czzAsync() {
         isSuccess: state.stat === "success"
       }, state);
     })["catch"](function (error) {
-      // catch会消化异常，如果不主动抛出，外面是接收不到异常的
       setError(error);
       return _extends({
         isIdle: state.stat === "idle",
@@ -6174,7 +6172,7 @@ var czzAsync = function czzAsync() {
  * @param { CurrencyProps } fromCurrency      : swap from token info
  * @param { currentProvider } currentProvider : current wallet provider 
  * @param { string } accounts                 : user account info
- * @return { boolean }  
+ * @return { 'authorization':boolean, 'allowanceTotal':object }  
  */
 
 function _catch$2(body, recover) {
@@ -6259,12 +6257,7 @@ function _settle(pact, state, value) {
  * @param { CurrencyProps } fromCurrency  swap from token info
  * @param { currentProvider } currentProvider : current wallet provider
  * @param { string } accounts user account info
- * @return { 
- *        approveLoading:boolean, 
- *        authorization:boolean, 
- *        approveResult:object, 
- *        pending:string[] 
- * }
+ * @return { 'authorization': boolean, 'approveResult': object }
  */
 
 
@@ -6461,25 +6454,17 @@ var approveAsync = function approveAsync(fromCurrency, currentProvider, accounts
         currency: fromCurrency
       });
 
-      var spender = from.router; // setApproveLoading(true)
-      // setPending([...pending, 'approve'])
-
+      var spender = from.router;
       return Promise.resolve(approve({
         provider: currentProvider,
         tokenAddress: fromCurrency == null ? void 0 : fromCurrency.tokenAddress,
         spender: spender,
         accounts: accounts
       })).then(function (res) {
-        // console.log('Approve result ======', res)
-        // setAuthorization(true)
-        // setApproveLoading(false)
-        // setPending(pending.filter(i => i !== 'approve'))
-        // setApproveResult(res)
         authorization = true;
-        approveResult = res; // })
+        approveResult = res;
       });
     }, function (error) {
-      // setAuthorization(false)
       authorization = false;
       throw error;
     });
@@ -6507,14 +6492,18 @@ var approveActions = function approveActions(fromCurrency, currentProvider, acco
  * @param { string } accounts             : swap user account info
  * @param {boolean } isInsurance          : is use insurance
  * @return { 
- *        loading             :boolean, 
- *        resultState         :object,  { priceStatus: 0, swapFee: 0, fromTokenValue: "", miniReceived: 0,  resStatus: []}
- *        insuranceStatus     :boolean, 
- *        isToCzz             :boolean, 
+ *        resStatus           :string[], swap status
+ *        insuranceStatus     :boolean,  insuranceStatus
+ *        isToCzz             :boolean,  isToCzz
  *        routerFrom          :string[], swap from token name array
  *        routerTo            :string[], swap to token name array
  *        bestFromArr         :string[], swap from token address array
- *        bestToArr           :string[]  swap to token address array
+ *        bestToArr           :string[], swap to token address array
+ *        priceStatus         :number,   0|1|2|3 
+ *        swapFee:            :number,   swap fee
+ *        fromTokenValue      :string,   swap from token value
+ *        changeAmount        :number,   swap from amount
+ *        miniReceived        :number,   swap to token value
  * }
 
  */
@@ -6558,8 +6547,7 @@ var changeInsuranceStatus = function changeInsuranceStatus(to, amount) {
           var tenPowDec = new BigNumber__default['default'](10).pow(decimals);
           poolInfo.totalAmountDisp = totalAmountBn.dividedBy(tenPowDec).toNumber();
           console.log(poolInfo);
-          var status = new BigNumber__default['default'](poolInfo.totalAmount).comparedTo(new BigNumber__default['default'](amount)) > 0; // setInsuranceStatus(status)
-
+          var status = new BigNumber__default['default'](poolInfo.totalAmount).comparedTo(new BigNumber__default['default'](amount)) > 0;
           state$2.insuranceStatus = status;
           return state$2;
         });
@@ -6719,8 +6707,7 @@ var swapCastingAmount = function swapCastingAmount(pool, isInsurance, isToCzz, s
 
           if (networkName === "BSC") {
             gas = gasPrice * 2500000;
-          } // debugger
-
+          }
 
           if (networkName === "BSC" && isInsurance && !isToCzz) {
             gas = gasPrice * 500000;
@@ -6855,6 +6842,10 @@ var swapTokenValue = function swapTokenValue(fromCurrency, toCurrency, isInsuran
             }();
 
             return _temp9 && _temp9.then ? _temp9.then(_temp10) : _temp10(_temp9);
+          }
+
+          if (isInsurance && to.currency.tokenAddress == to.czz) {
+            throw 'if to.currency.tokenAddress == to.czz do not use insurance ';
           }
 
           state$2.isToCzz = to != null && (_to$currency = to.currency) != null && _to$currency.symbol ? (to == null ? void 0 : (_to$currency2 = to.currency) == null ? void 0 : _to$currency2.symbol.indexOf('CZZ')) !== -1 : false;
@@ -7032,18 +7023,16 @@ var fetchPairData = function fetchPairData(tokenA, tokenB, factoryAddress, initC
  * @param { string[] } bestToArr              : swap to token address array
  * @param { number } swapFee                  : swap fee
  * @return {
- *        loading : boolean, 
- *        impactPrice : number ,  important swap price 
- *        resultState : object   {
-                ethRes: number,
-                czzRes: number,
-                midPrice: number,
-                midProce2: number,
-                priceStatus: number,   3|2|1|0  
-                priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
-                price: string,
-                resStatus: string[]
-              }
+ *        impactPrice : number  important swap price 
+ *        ethRes: number,        eth result
+ *        czzRes: number,        czz result
+ *        midPrice: number,      mid price
+ *        midProce2: number,     mid price2
+ *        priceStatus: number,   3|2|1|0  
+ *        priceEffect: string,   'SWAP_IMPACT_HIGH'|'SWAP_IMPACT_WARN'|'SWAP_IMPACT_WARN'|'SWAP'
+ *        price: string,         important swap price
+ *        resStatus: string[]    swap mid price status
+
  * }
  */
 
@@ -7165,8 +7154,7 @@ var fetchPrice = function fetchPrice(fromCurrency, toCurrency, resGetTokenValue)
               var midPrice = ethRes / czzRes;
               var midProce2 = Number(Number(Number(from.tokenValue) * midPrice).toFixed(to.currency.decimals));
               var price = Number((midProce2 - Number(to.tokenValue) - Number(resGetTokenValue.swapFee)) / midProce2 * 100).toFixed(2);
-              resultStage = [].concat(resultStage, ['end']); // setImpactPrice(price)
-
+              resultStage = [].concat(resultStage, ['end']);
               var priceEffect = changePriceStatus(price);
               state$1.ethRes = ethRes;
               state$1.czzRes = czzRes;
@@ -7193,8 +7181,7 @@ var fetchPrice = function fetchPrice(fromCurrency, toCurrency, resGetTokenValue)
             return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
           }
 
-          resultStage = [].concat(resultStage, ['loading', 'FINDING_PRICE_ING']); // debugger
-
+          resultStage = [].concat(resultStage, ['loading', 'FINDING_PRICE_ING']);
           var ethRes = 1;
 
           var _temp5 = function () {
@@ -7257,8 +7244,7 @@ var changePriceStatus = function changePriceStatus(val) {
       priceEffect: 'SWAP'
     };
   }
-}; // return { loading, impactPrice, resultState, fetchPrice }
-
+};
 
 var getMidPrice = function getMidPrice(fromCurrency, toCurrency, resGetTokenValue) {
   try {
@@ -7300,8 +7286,7 @@ var state = {
 
 
 var swapSuccess = function swapSuccess(from, to, receipt) {
-  successMessage(from, to, receipt); // debugger
-  // resSwap()
+  successMessage(from, to, receipt);
 };
 /**
  * @description: swap main
